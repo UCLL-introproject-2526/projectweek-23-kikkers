@@ -15,9 +15,6 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 
 import images
-pygame.display.set_caption("Frogeato")
-clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial", 32)
 
 
 def main():
@@ -30,7 +27,7 @@ def start_screen(): #Startscherm
     quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
 
     while True:
-        screen.fill((0, 0, 0))
+        screen.blit(images.game_background, (0, 0))
         mouse_pos = pygame.mouse.get_pos()
 
         # Hover
@@ -74,16 +71,19 @@ def start_screen(): #Startscherm
 start_screen() 
 
 countdown_start_time = pygame.time.get_ticks()
+game_over = False
+restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 80, 40)
+quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 80, 40)
 
 mosquito_size = 70
 mosquito_color = (200, 50, 50)
-mosquito = pygame.Rect(400, 400, mosquito_size, mosquito_size)
+mosquito = pygame.Rect(400, 100, mosquito_size, mosquito_size)
 speed = 5
 
 frog_size = 200
 frog_color = (50, 200, 50)
-top_margin = 200
-frog_space = pygame.Rect(0, 0, screen.get_width(), top_margin)
+bottom_margin = 200
+frog_space = pygame.Rect(0, HEIGHT - bottom_margin, screen.get_width(), bottom_margin)
 frog = pygame.Rect(0, 0, frog_size, frog_size)
 frog.center = frog_space.center
 
@@ -109,27 +109,10 @@ def point_line_distance(px, py, x1, y1, x2, y2):
     closest_y = y1 + u * (y2 - y1)
     return math.hypot(px - closest_x, py - closest_y)
 
-#countdown
-def countdown():
-    font = pygame.font.Font(None, 100)
-    count = 3
-    start_time = time.time()
-    while count >= 0:
-        if time.time() - start_time >= 1:
-            start_time = time.time()
-            count -= 1
-        screen.fill((0,0,0))
-        if count > 0:
-            text = font.render(str(count), True, (255,255,255))
-        else:
-            text = font.render("GO!", True, (0,255,0))
-        screen.blit(text, (200, 150))
-        pygame.display.update()
-    print("Start")
-
 running = True
 while running:
     clock.tick(FPS)
+    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
     elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
     game_started = elapsed >= 3
@@ -137,8 +120,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if game_over and event.type == pygame.MOUSEBUTTONDOWN:
+            if restart_button.collidepoint(event.pos):
+                game_over = False
+                mosquito = pygame.Rect(400, 100, mosquito_size, mosquito_size)
+                tongue_active = False
+                tongue_length = 0
+                attack_timer = random.randint(60, 120)
+                countdown_start_time = pygame.time.get_ticks()
+            if quit_button.collidepoint(event.pos):
+                running = False
 
-    if game_started:
+    if game_started and not game_over:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             mosquito.x -= speed
@@ -149,10 +142,10 @@ while running:
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             mosquito.y += speed
 
-        play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
+        play_area = pygame.Rect(0, 0, screen.get_width(), screen.get_height() - bottom_margin)
         mosquito.clamp_ip(play_area)
 
-    if game_started and not tongue_active:
+    if game_started and not game_over and not tongue_active:
         attack_timer -= 1
         if attack_timer <= 0:
             tongue_active = True
@@ -168,7 +161,8 @@ while running:
 
     if game_started and tongue_active:
         if not retracting:
-            tongue_length += tongue_speed
+            if not game_over:
+                tongue_length += tongue_speed
             if tongue_length >= max_tongue_length:
                 retracting = True
         else:
@@ -183,10 +177,9 @@ while running:
         if point_line_distance(mosquito.centerx, mosquito.centery,
                                frog.centerx, frog.centery,
                                end_x, end_y) < (tongue_width / 2 + mosquito_size / 2):
-            print("Mosquito caught!")
-            running = False
+            game_over = True
 
-    screen.fill((40, 40, 40))
+    screen.blit(images.game_background, (0, 0))
     screen.blit(images.mosquito_image, mosquito.topleft)
     screen.blit(images.frog_image, frog.topleft)
 
@@ -201,6 +194,25 @@ while running:
         countdown_num = max(1, 3 - int(elapsed))
         countdown_text = font.render(str(countdown_num), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
+
+    if game_over:
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        game_over_text = font.render("Game Over", True, (255, 255, 255))
+        screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
+        mouse_pos = pygame.mouse.get_pos()
+        restart_color = (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0)
+        quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
+        if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        pygame.draw.rect(screen, (0, 255, 0), restart_button)
+        pygame.draw.rect(screen, (255, 0, 0), quit_button)
+        restart_text = font.render("Restart", True, restart_color)
+        quit_text = font.render("Quit", True, quit_color)
+        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
+        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
 
     pygame.display.flip()
 
