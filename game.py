@@ -13,6 +13,8 @@ pygame.display.set_caption("Frog vs Fly Pro Mode")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 
+import images
+
 def main():
     pygame.init()
 
@@ -138,8 +140,8 @@ while running:
     #         running = False
 
     screen.fill((40, 40, 40))
-    pygame.draw.rect(screen, mosquito_color, mosquito)  
-    pygame.draw.rect(screen, frog_color, frog)          
+    screen.blit(images.mosquito_image, mosquito.topleft)  
+    screen.blit(images.frog_image, frog.topleft)          
 
     pygame.display.flip()
 
