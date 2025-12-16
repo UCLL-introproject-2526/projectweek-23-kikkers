@@ -3,7 +3,7 @@ import sys
 import random
 import math
 
-# Code werkt maar problemen met tong
+# Code werkt
 WIDTH, HEIGHT = 1024, 768
 FPS = 60
 
