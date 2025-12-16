@@ -184,3 +184,29 @@ sys.exit()
 
 if __name__ == "__main__":
     main()
+
+
+#countdown
+import pygame, time
+
+pygame.init()
+font = pygame.font.Font(None, 100)
+
+count = 3
+start_time = time.time()
+
+while count >= 0:
+    if time.time() - start_time >= 1:
+        start_time = time.time()
+        count -= 1
+
+    screen.fill((0,0,0))
+    if count > 0:
+        text = font.render(str(count), True, (255,255,255))
+    else:
+        text = font.render("GO!", True, (0,255,0))
+
+    screen.blit(text, (200, 150))
+    pygame.display.update()
+
+print("Start")
