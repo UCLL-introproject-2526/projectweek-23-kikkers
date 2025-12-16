@@ -2,6 +2,8 @@ import pygame
 import sys
 import random
 import math
+import images
+import pygame, time
 
 
 # Code werkt
@@ -15,7 +17,6 @@ pygame.display.set_caption("Frogeato")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 
-import images
 
 def main():
     pygame.init()
@@ -106,6 +107,24 @@ def point_line_distance(px, py, x1, y1, x2, y2):
     closest_y = y1 + u * (y2 - y1)
     return math.hypot(px - closest_x, py - closest_y)
 
+#countdown
+def countdown():
+    font = pygame.font.Font(None, 100)
+    count = 3
+    start_time = time.time()
+    while count >= 0:
+        if time.time() - start_time >= 1:
+            start_time = time.time()
+            count -= 1
+        screen.fill((0,0,0))
+        if count > 0:
+            text = font.render(str(count), True, (255,255,255))
+        else:
+            text = font.render("GO!", True, (0,255,0))
+        screen.blit(text, (200, 150))
+        pygame.display.update()
+    print("Start")
+
 running = True
 while running:
     clock.tick(FPS)
@@ -187,4 +206,8 @@ pygame.quit()
 sys.exit()
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> df2fc5cb84aeeeda22ec042cf8a4d3317df4c896
