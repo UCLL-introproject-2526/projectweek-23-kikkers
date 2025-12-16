@@ -1,60 +1,145 @@
 # Copilot Instructions - Kikkers Project
 
 ## Project Overview
-This is a classroom assignment project ("projectweek-23-kikkers") featuring a pygame-based game implementation. The project uses a mixed-language setup with Python for the game logic and a simple Java "Hello World" application.
+**Kikkers** (Frogs) is a pygame-based arcade game where you play as a fly trying to eat humans while avoiding a frog's tongue. Eat 30 humans to grow large enough to defeat the frog and win!
+
+## Game Mechanics
+- **Player**: Fly controlled with W-A-S-D keys
+- **Objective**: Eat 30 humans to grow large enough, then eat the frog
+- **Enemy**: Frog shoots tongues from the top of screen
+- **Growth System**: Fly grows at 10, 20, and 30 humans eaten (small → medium → large → mega)
+- **Win Condition**: Reach 30 humans and eat the frog
+- **Lose Condition**: Get hit by frog's tongue
+- **Difficulty Scaling**: Humans fall faster and frog shoots more frequently as fly grows
 
 ## Technology Stack
-- **Python**: Main game implementation using pygame library
-- **Java**: Simple standalone application (app.java)
-- **Pygame**: Graphics and game loop framework
-
-## Current State & Known Issues
-- [game.py](game.py#L7): Contains a critical typo - `pygame.displaty.set_mode()` should be `pygame.display.set_mode()`
-- [app.java](app.java#L7): Missing semicolon after `System.out.println("Hello world!")`
-- The pygame implementation is incomplete - has an infinite loop with minimal functionality
+- **Python 3.x**: Main language
+- **Pygame**: Graphics, input, game loop
+- **Virtual Environment**: REQUIRED for macOS/Homebrew Python (PEP 668)
 
 ## Development Setup
-- **Python Environment**: macOS with Homebrew-managed Python (externally managed, PEP 668)
-- **Virtual Environment Required**: MUST use venv - direct pip install will fail
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate
-  pip install pygame
-  ```
-- **Running the Game**: Always activate venv first: `source venv/bin/activate && python game.py`
-- Project uses standard Python gitignore patterns from toptal.com
-- **Note**: Do NOT use `--break-system-packages` - use proper venv isolation instead
+**CRITICAL - macOS/Homebrew Python Environment:**
+```bash
+# Create virtual environment (required)
+python3 -m venv venv
+source venv/bin/activate
+
+# Install pygame
+pip install pygame
+
+# Run the game
+python main.py
+```
+
+**Note**: Direct `pip install` without venv will fail with "externally-managed-environment" error.
 
 ## File Structure
 ```
-/Users/moe/kikkers/
-├── game.py          # Pygame application (incomplete)
-├── app.java         # Java hello world
-├── README.md        # GitHub classroom assignment metadata
-├── .gitignore       # Python/VSCode ignore patterns
-└── venv/            # Python virtual environment (git-ignored)
+kikkers/
+├── main.py              # Game loop, entity manager, state transitions
+├── game_states.py       # MenuState, PlayingState, WinState, LoseState
+├── config.py            # All constants (speeds, colors, thresholds, paths)
+├── background.py        # Parallax scrolling background system
+├── entities/
+│   ├── fly.py           # Player (WASD controls, growth, physics)
+│   ├── frog.py          # Boss enemy (tongue shooting, aiming)
+│   ├── tongue.py        # Frog's projectile (extend/retract animation)
+│   └── human.py         # Food items (falling, collision)
+└── assets/images/
+    ├── fly_sprite.png
+    ├── frog_idle.png
+    ├── frog_tongue.png
+    └── human.png
 ```
 
-## Code Patterns & Conventions
-- **Entry Points**: 
-  - Python: `main()` function in game.py (not currently called)
-  - Java: Standard `public static void main(String[] args)` pattern
-  
-- **Pygame Structure**: Uses nested function pattern - `create_main_surface()` defined inside `main()` but creates infinite loop
+## Architecture Patterns
+
+### Game Loop (main.py)
+- **State Machine**: Menu → Playing → Won/Lost
+- **Delta Time**: Frame-independent movement (`dt` normalized to 60 FPS)
+- **Entity Management**: Centralized lists for humans, tongues
+- **State Transitions**: States set `next_state` to trigger transitions
+
+### Entity System
+All entities follow this pattern:
+- `__init__()`: Load sprites, initialize physics
+- `update(dt)`: Update position, animation, state
+- `draw(surface)`: Render to screen
+- Collision uses circular hitboxes with radius
+
+### State Classes (game_states.py)
+Each state has:
+- `handle_event(event)`: Process input
+- `update(dt)`: Game logic
+- `render(screen)`: Drawing
+- `next_state`: Trigger state change
+
+### Configuration (config.py)
+**ALL constants centralized here** - no magic numbers in code:
+- Screen dimensions, FPS
+- Entity spawn positions and speeds
+- Growth thresholds (10, 20, 30 humans)
+- Asset paths
+- Color definitions
+
+## Critical Gameplay Systems
+
+### Growth System
+Thresholds in [config.py](config.py#L24-L29):
+```python
+FLY_GROWTH_THRESHOLDS = {
+    'small': 0,    # 0-9 humans
+    'medium': 10,  # 10-19 humans  
+    'large': 20,   # 20-29 humans
+    'mega': 30     # 30+ humans (can eat frog)
+}
+```
+
+Fly tracks `humans_eaten` counter, scales sprite, adjusts hitbox radius.
+
+### Frog Tongue Shooting
+1. **Idle**: Frog waits random cooldown (gets shorter as fly grows)
+2. **Aiming**: 500ms warning with visual indicator (line + target circle)
+3. **Shooting**: Creates Tongue entity with predictive aim
+4. **Retracting**: Tongue returns, frog returns to idle
+
+Frog uses predictive targeting - aims ahead of fly's velocity.
+
+### Collision Detection
+- **Fly ↔ Human**: Circle-circle (distance < radius1 + radius2)
+- **Fly ↔ Tongue**: Line-circle (checks 20 segments along tongue)
+- **Fly ↔ Frog**: Circle-circle (only when fly is mega size)
+
+### Scrolling Background
+Parallax system with multiple layers scrolling at different speeds to simulate upward flight. Tiles seamlessly. Fallback to solid color if images missing.
 
 ## Common Tasks
-When fixing the game:
-1. Fix the typo: `pygame.displaty` → `pygame.display`
-2. Properly structure the game loop (current infinite while loop in initialization is incorrect)
-3. Add missing `main()` call at module level
-4. Consider extracting `create_main_surface()` outside of `main()` for better structure
 
-When working with Java:
-1. Add missing semicolon on line 7
-2. Compile with standard javac: `javac app.java`
-3. Run with: `java App`
+### Adding New Features
+1. Add constants to [config.py](config.py)
+2. Implement in relevant entity class
+3. Update game loop in [game_states.py](game_states.py) PlayingState
+4. Test across different fly growth levels
+
+### Debugging
+- Each entity has `draw_debug()` method for collision circles
+- Check terminal for pygame errors
+- Verify asset paths in config.py match actual file locations
+
+### Balancing Difficulty
+Edit in [config.py](config.py):
+- `HUMAN_SPAWN_INTERVAL_MS`: Time between spawns
+- `FROG_SHOOT_COOLDOWN_MIN/MAX`: Tongue shooting frequency
+- `*_SPEED_MULTIPLIERS`: Entity speeds by level
+- `HUMANS_TO_WIN`: Victory threshold
+
+## Known Issues & Todos
+- Background images may not exist (uses black fallback)
+- No sound effects or music yet
+- No particle effects for eating humans
+- Win screen doesn't check if fly actually collides with frog (auto-win at 30 humans)
 
 ## GitHub Context
-- Repository: UCLL-introproject-2526/projectweek-23-kikkers
-- Current branch: main (also default)
-- This is a GitHub Classroom assignment
+- **Repository**: UCLL-introproject-2526/projectweek-23-kikkers
+- **Branch**: main (default)
+- **Type**: GitHub Classroom assignment
