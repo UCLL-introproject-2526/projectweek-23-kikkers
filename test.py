@@ -3,259 +3,237 @@ import sys
 import random
 import math
 
-# --------------------------- Settings ---------------------------
-WIDTH, HEIGHT = 900, 600
+
+# Code werkt
+
+WIDTH, HEIGHT = 1024, 768
 FPS = 60
-
-# Colors
-WHITE = (255, 255, 255)
-BLACK = (0,0,0)
-BLUE_SKY = (50, 150, 255)
-RED = (200,50,50)
-YELLOW = (255,255,0)
-GREEN = (50,180,50)
-DARK_GREEN = (20,120,20)
-GRAY = (200,200,200)
-
-# Fly settings
-FLY_SPEED = 6
-FLY_WING_FLAP_RATE = 5
-
-# Tongue settingss
-TONGUE_SPEED_MIN = 15
-TONGUE_SPEED_MAX = 25
-TONGUE_MAX_LENGTH = 600
-TONGUE_WIDTH = 8
-TONGUE_COOLDOWN = 40  # frames before next tongue
-
-# Particle settings
-PARTICLE_LIFETIME = 20
-PARTICLE_COUNT = 8
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Frog vs Fly Pro Mode")
-clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial", 32)
+pygame.display.set_caption("Frogeato")
+import pygame
+import sys
+import random
+import math
+from entities.human import Human
+import images
 
-# --------------------------- Pixel Frog & Fly ---------------------------
-def create_pixel_frog():
-    frog = pygame.Surface((40,30), pygame.SRCALPHA)
-    frog.fill((0,0,0,0))
-    pygame.draw.rect(frog, GREEN, (0,10,40,20))
-    pygame.draw.rect(frog, DARK_GREEN, (10,0,20,15))
-    pygame.draw.rect(frog, BLACK, (10,5,5,5))
-    pygame.draw.rect(frog, BLACK, (25,5,5,5))
-    return frog
 
-def create_pixel_fly():
-    fly1 = pygame.Surface((20,20), pygame.SRCALPHA)
-    fly1.fill((0,0,0,0))
-    pygame.draw.circle(fly1, YELLOW, (10,10),10)
-    pygame.draw.circle(fly1, BLACK, (7,7),3)
-    pygame.draw.circle(fly1, BLACK, (13,7),3)
-    fly2 = pygame.Surface((20,20), pygame.SRCALPHA)
-    fly2.fill((0,0,0,0))
-    pygame.draw.circle(fly2, YELLOW, (10,10),10)
-    pygame.draw.circle(fly2, BLACK, (6,8),3)
-    pygame.draw.circle(fly2, BLACK, (14,8),3)
-    return [fly1, fly2]  # for flapping animation
+# Settings
+WIDTH, HEIGHT = 1024, 768
+FPS = 60
+TARGET_SCORE = 10
 
-# --------------------------- Particle Class ---------------------------
-class Particle:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.radius = random.randint(2,4)
-        self.color = WHITE
-        self.lifetime = PARTICLE_LIFETIME
-        self.vx = random.uniform(-2,2)
-        self.vy = random.uniform(-2,0)
 
-    def update(self):
-        self.x += self.vx
-        self.y += self.vy
-        self.lifetime -=1
+def start_screen(screen, clock, font):
+    button_width = 200
+    button_height = 50
+    start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
+    quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
 
-    def draw(self, screen, camera_y):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y - camera_y)), self.radius)
-
-# --------------------------- Fly Class ---------------------------
-class Fly:
-    def __init__(self, x, y, images):
-        self.rect = images[0].get_rect(center=(x,y))
-        self.images = images
-        self.current_frame = 0
-        self.frame_timer = 0
-        self.speed = FLY_SPEED
-
-    def move(self, keys):
-        if keys[pygame.K_w] and self.rect.top - self.speed > 0:
-            self.rect.y -= self.speed
-        if keys[pygame.K_s] and self.rect.bottom + self.speed < HEIGHT:
-            self.rect.y += self.speed
-        if keys[pygame.K_a] and self.rect.left - self.speed > 0:
-            self.rect.x -= self.speed
-        if keys[pygame.K_d] and self.rect.right + self.speed < WIDTH:
-            self.rect.x += self.speed
-
-    def animate(self):
-        self.frame_timer +=1
-        if self.frame_timer % FLY_WING_FLAP_RATE ==0:
-            self.current_frame = (self.current_frame +1) % len(self.images)
-
-    def draw(self, screen, camera_y):
-        screen.blit(self.images[self.current_frame], (self.rect.x, self.rect.y - camera_y))
-
-# --------------------------- Tongue Class ---------------------------
-class Tongue:
-    def __init__(self, frog, fly, particles):
-        self.frog = frog
-        self.fly = fly
-        self.width = TONGUE_WIDTH
-        self.length = 0
-        self.max_length = TONGUE_MAX_LENGTH
-        self.speed = random.randint(TONGUE_SPEED_MIN, TONGUE_SPEED_MAX)
-        self.extending = True
-        self.particles = particles
-
-    def update(self):
-        # Horizontal follow
-        self.frog.rect.centerx += (self.fly.rect.centerx - self.frog.rect.centerx) * 0.05
-
-        if self.extending:
-            self.length += self.speed
-            if self.length >= self.max_length:
-                self.extending = False
-        else:
-            self.length -= self.speed
-            # Generate particles when retracting
-            for _ in range(PARTICLE_COUNT):
-                self.particles.append(Particle(self.frog.rect.centerx, self.frog.rect.bottom + self.length))
-            if self.length <=0:
-                return False
-        return True
-
-    def get_rect(self):
-        return pygame.Rect(self.frog.rect.centerx - self.width//2, self.frog.rect.bottom, self.width, self.length)
-
-    def draw(self, screen, camera_y):
-        rect = self.get_rect()
-        pygame.draw.rect(screen, RED, (rect.x, rect.y - camera_y, rect.width, rect.height))
-
-# --------------------------- Frog Class ---------------------------
-class Frog:
-    def __init__(self, x, y, image):
-        self.rect = image.get_rect(center=(x,y))
-        self.image = image
-
-    def draw(self, screen, camera_y):
-        screen.blit(self.image, (self.rect.x, self.rect.y - camera_y))
-
-# --------------------------- Menu ---------------------------
-def draw_menu():
-    screen.fill(BLUE_SKY)
-    title = font.render("Frog vs Fly Pro", True, WHITE)
-    screen.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//3))
-    button_rect = pygame.Rect(WIDTH//2-100, HEIGHT//2, 200, 60)
-    pygame.draw.rect(screen, GREEN, button_rect)
-    button_text = font.render("NEW GAME", True, BLACK)
-    screen.blit(button_text, (WIDTH//2 - button_text.get_width()//2, HEIGHT//2+5))
-    pygame.display.flip()
-    return button_rect
-
-def menu_loop():
     while True:
-        button_rect = draw_menu()
+        screen.fill((0, 0, 0))
+        mouse_pos = pygame.mouse.get_pos()
+
+        start_color = (255, 255, 255) if start_button.collidepoint(mouse_pos) else (0, 0, 0)
+        quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
+
+        if start_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+        title_text = font.render("Frogeato", True, (255, 255, 255))
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2,
+                                 HEIGHT // 2 - title_text.get_height() // 2 - 60))
+
+        pygame.draw.rect(screen, (0, 255, 0), start_button)
+        start_text = font.render("Start", True, start_color)
+        screen.blit(start_text, (start_button.centerx - start_text.get_width() // 2,
+                                 start_button.centery - start_text.get_height() // 2))
+
+        pygame.draw.rect(screen, (255, 0, 0), quit_button)
+        quit_text = font.render("Quit", True, quit_color)
+        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2,
+                                quit_button.centery - quit_text.get_height() // 2))
+
+        pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect.collidepoint(event.pos):
+                if start_button.collidepoint(event.pos):
                     return
+                if quit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
 
-# --------------------------- Main Game ---------------------------
+
+def point_line_distance(px, py, x1, y1, x2, y2):
+    line_mag = math.hypot(x2 - x1, y2 - y1)
+    if line_mag == 0:
+        return math.hypot(px - x1, py - y1)
+    u = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / (line_mag ** 2)
+    u = max(min(u, 1), 0)
+    closest_x = x1 + u * (x2 - x1)
+    closest_y = y1 + u * (y2 - y1)
+    return math.hypot(px - closest_x, py - closest_y)
+
+
 def main():
-    menu_loop()
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Frogeato")
+    clock = pygame.time.Clock()
+    ui_font = pygame.font.SysFont("Arial", 32)
 
-    fly_images = create_pixel_fly()
-    fly = Fly(WIDTH//2, HEIGHT-50, fly_images)
-    frog_img = create_pixel_frog()
-    frogs = [
-        Frog(WIDTH//4, 50, frog_img),
-        Frog(WIDTH//2, 50, frog_img),
-        Frog(WIDTH*3//4, 50, frog_img)
-    ]
+    # Player (mosquito) and frog static area
+    mosquito_size = 70
+    mosquito = pygame.Rect(400, 400, mosquito_size, mosquito_size)
+    speed = 5
 
-    tongue = None
-    tongue_cooldown = 0
+    frog_size = 200
+    top_margin = 200
+    frog_space = pygame.Rect(0, 0, screen.get_width(), top_margin)
+    frog = pygame.Rect(0, 0, frog_size, frog_size)
+    frog.center = frog_space.center
+
+    # Tongue
+    tongue_color = (255, 100, 100)
+    tongue_active = False
+    tongue_length = 0
+    max_tongue_length = 800
+    tongue_speed = 14
+    retracting_speed = 23
+    tongue_width = 30
+    tongue_dx, tongue_dy = 0, 0
+    retracting = False
+    attack_timer = random.randint(60, 120)
+
+    # Humans, scoring
+    humans = pygame.sprite.Group()
     score = 0
-    particles = []
-    camera_y = 0
+    game_won = False
 
-    while True:
+    HUMAN_SPAWN_EVENT = pygame.USEREVENT + 1
+    pygame.time.set_timer(HUMAN_SPAWN_EVENT, 5000)
+
+    # stun state
+    STUN_MS = 500
+    stunned = False
+    stun_end_time = 0
+
+    start_screen(screen, clock, ui_font)
+
+    running = True
+    while running:
         clock.tick(FPS)
-        keys = pygame.key.get_pressed()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
+            if event.type == HUMAN_SPAWN_EVENT and not game_won:
+                humans.add(Human(WIDTH, HEIGHT))
 
-        # Update fly
-        fly.move(keys)
-        fly.animate()
-        camera_y = fly.rect.y - HEIGHT//2
+        # Update stun state
+        if stunned and pygame.time.get_ticks() >= stun_end_time:
+            stunned = False
 
-        # Tongue
-        if tongue is None and tongue_cooldown <=0:
-            shooter = random.choice(frogs)
-            tongue = Tongue(shooter, fly, particles)
-            tongue_cooldown = TONGUE_COOLDOWN
-        elif tongue_cooldown >0:
-            tongue_cooldown -=1
+        keys = pygame.key.get_pressed()
+        # Movement disabled while stunned
+        if not stunned:
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                mosquito.x -= speed
+            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                mosquito.x += speed
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
+                mosquito.y -= speed
+            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                mosquito.y += speed
 
-        if tongue:
-            if not tongue.update():
-                tongue = None
+        play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
+        mosquito.clamp_ip(play_area)
 
-        # Update particles
-        particles = [p for p in particles if p.lifetime>0]
-        for p in particles:
-            p.update()
+        # Tongue behavior (keeps original mechanics)
+        if not tongue_active:
+            attack_timer -= 1
+            if attack_timer <= 0:
+                tongue_active = True
+                tongue_length = 0
+                retracting = False
+                dx = mosquito.centerx - frog.centerx
+                dy = mosquito.centery - frog.centery
+                dist = math.hypot(dx, dy)
+                if dist == 0:
+                    dist = 1
+                tongue_dx = dx / dist
+                tongue_dy = dy / dist
+                attack_timer = random.randint(60, 180)
 
-        # Collision check
-        if tongue and fly.rect.colliderect(tongue.get_rect()):
-            print("Game Over! Score:", score)
-            pygame.quit()
-            sys.exit()
+        if tongue_active:
+            if not retracting:
+                tongue_length += tongue_speed
+                if tongue_length >= max_tongue_length:
+                    retracting = True
+            else:
+                tongue_length -= retracting_speed
+                if tongue_length <= 0:
+                    tongue_active = False
+                    tongue_length = 0
 
-        # Draw background (vertical scrolling)
-        screen.fill(BLUE_SKY)
-        for i in range(-1, HEIGHT//100 +2):
-            pygame.draw.rect(screen, GRAY, (0, i*100 - camera_y%100, WIDTH, 50))
+        end_x = frog.centerx + tongue_dx * tongue_length
+        end_y = frog.centery + tongue_dy * tongue_length
 
-        # Draw frogs
-        for f in frogs:
-            f.draw(screen, camera_y)
+        if tongue_active:
+            if point_line_distance(mosquito.centerx, mosquito.centery,
+                                   frog.centerx, frog.centery,
+                                   end_x, end_y) < (tongue_width / 2 + mosquito_size / 2):
+                print("Mosquito caught!")
+                running = False
 
-        # Draw tongue
-        if tongue:
-            tongue.draw(screen, camera_y)
+        # Update and draw
+        screen.fill((40, 40, 40))
+        screen.blit(images.mosquito_image, mosquito.topleft)
+        screen.blit(images.frog_image, frog.topleft)
 
-        # Draw particles
-        for p in particles:
-            p.draw(screen, camera_y)
+        if tongue_active:
+            pygame.draw.line(screen, tongue_color, frog.center, (end_x, end_y), tongue_width)
 
-        # Draw fly
-        fly.draw(screen, camera_y)
+        humans.update()
+        humans.draw(screen)
 
-        # Score
-        score +=1
-        score_text = font.render(f"Score: {score}", True, WHITE)
-        screen.blit(score_text, (10, HEIGHT-50))
+        # Collision: mosquito rect with humans -> increment score
+        collected = [h for h in humans if mosquito.colliderect(h.rect)]
+        for h in collected:
+            h.kill()
+        if collected:
+            score += len(collected)
+            # apply stun for a short duration
+            stunned = True
+            stun_end_time = pygame.time.get_ticks() + STUN_MS
+            if score >= TARGET_SCORE:
+                game_won = True
+                pygame.time.set_timer(HUMAN_SPAWN_EVENT, 0)
+
+        # UI
+        score_surf = ui_font.render(f"Score: {score}", True, (255, 255, 255))
+        screen.blit(score_surf, (10, 10))
+
+        # Stun indicator
+        if stunned:
+            stun_surf = ui_font.render("Sucking Blood!", True, (255, 200, 0))
+            screen.blit(stun_surf, (mosquito.centerx - stun_surf.get_width() // 2, mosquito.top - 30))
+        if game_won:
+            win_surf = ui_font.render("You win!", True, (0, 255, 0))
+            screen.blit(win_surf, (WIDTH // 2 - win_surf.get_width() // 2, HEIGHT // 2))
 
         pygame.display.flip()
+
+    pygame.quit()
+
 
 if __name__ == "__main__":
     main()

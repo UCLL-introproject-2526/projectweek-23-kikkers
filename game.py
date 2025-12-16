@@ -2,20 +2,6 @@ import pygame
 import sys
 import random
 import math
-
-
-# Code werkt
-
-WIDTH, HEIGHT = 1024, 768
-FPS = 60
-
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Frogeato")
-import pygame
-import sys
-import random
-import math
 from entities.human import Human
 import images
 
@@ -33,7 +19,12 @@ def start_screen(screen, clock, font):
     quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
 
     while True:
-        screen.fill((0, 0, 0))
+        # use background if available
+        try:
+            screen.blit(images.game_background, (0, 0))
+        except Exception:
+            screen.fill((0, 0, 0))
+
         mouse_pos = pygame.mouse.get_pos()
 
         start_color = (255, 255, 255) if start_button.collidepoint(mouse_pos) else (0, 0, 0)
@@ -92,16 +83,16 @@ def main():
 
     # Player (mosquito) and frog static area
     mosquito_size = 70
-    mosquito = pygame.Rect(400, 400, mosquito_size, mosquito_size)
+    mosquito = pygame.Rect(400, 100, mosquito_size, mosquito_size)
     speed = 5
 
     frog_size = 200
-    top_margin = 200
-    frog_space = pygame.Rect(0, 0, screen.get_width(), top_margin)
+    bottom_margin = 200
+    frog_space = pygame.Rect(0, HEIGHT - bottom_margin, screen.get_width(), bottom_margin)
     frog = pygame.Rect(0, 0, frog_size, frog_size)
     frog.center = frog_space.center
 
-    # Tongue
+    # Tongue / AI attack
     tongue_color = (255, 100, 100)
     tongue_active = False
     tongue_length = 0
@@ -117,48 +108,73 @@ def main():
     humans = pygame.sprite.Group()
     score = 0
     game_won = False
+    game_over = False
 
     HUMAN_SPAWN_EVENT = pygame.USEREVENT + 1
     pygame.time.set_timer(HUMAN_SPAWN_EVENT, 5000)
 
-    # stun state
+    # stun state (milliseconds)
     STUN_MS = 500
     stunned = False
     stun_end_time = 0
 
+    # Game control
     start_screen(screen, clock, ui_font)
+    countdown_start_time = pygame.time.get_ticks()
+
+    # restart/quit buttons for game over
+    restart_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2, 80, 40)
+    quit_button = pygame.Rect(WIDTH // 2 + 20, HEIGHT // 2, 80, 40)
 
     running = True
     while running:
         clock.tick(FPS)
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+        elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
+        game_started = elapsed >= 3
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == HUMAN_SPAWN_EVENT and not game_won:
+            if game_over and event.type == pygame.MOUSEBUTTONDOWN:
+                if restart_button.collidepoint(event.pos):
+                    # reset game state
+                    game_over = False
+                    humans.empty()
+                    score = 0
+                    game_won = False
+                    stunned = False
+                    attack_timer = random.randint(60, 120)
+                    mosquito = pygame.Rect(400, 100, mosquito_size, mosquito_size)
+                    countdown_start_time = pygame.time.get_ticks()
+                if quit_button.collidepoint(event.pos):
+                    running = False
+            if event.type == HUMAN_SPAWN_EVENT and not game_won and not game_over and game_started:
                 humans.add(Human(WIDTH, HEIGHT))
 
-        # Update stun state
-        if stunned and pygame.time.get_ticks() >= stun_end_time:
-            stunned = False
+        # Movement & input only after countdown and not game over
+        if game_started and not game_over:
+            # Update stun state
+            if stunned and pygame.time.get_ticks() >= stun_end_time:
+                stunned = False
 
-        keys = pygame.key.get_pressed()
-        # Movement disabled while stunned
-        if not stunned:
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                mosquito.x -= speed
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                mosquito.x += speed
-            if keys[pygame.K_UP] or keys[pygame.K_w]:
-                mosquito.y -= speed
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                mosquito.y += speed
+            keys = pygame.key.get_pressed()
+            if not stunned:
+                if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                    mosquito.x -= speed
+                if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                    mosquito.x += speed
+                if keys[pygame.K_UP] or keys[pygame.K_w]:
+                    mosquito.y -= speed
+                if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                    mosquito.y += speed
 
-        play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
-        mosquito.clamp_ip(play_area)
+            play_area = pygame.Rect(0, 0, screen.get_width(), screen.get_height() - bottom_margin)
+            mosquito.clamp_ip(play_area)
 
-        # Tongue behavior (keeps original mechanics)
-        if not tongue_active:
+        # Tongue AI
+        if game_started and not game_over and not tongue_active:
             attack_timer -= 1
             if attack_timer <= 0:
                 tongue_active = True
@@ -173,7 +189,7 @@ def main():
                 tongue_dy = dy / dist
                 attack_timer = random.randint(60, 180)
 
-        if tongue_active:
+        if game_started and tongue_active:
             if not retracting:
                 tongue_length += tongue_speed
                 if tongue_length >= max_tongue_length:
@@ -187,48 +203,75 @@ def main():
         end_x = frog.centerx + tongue_dx * tongue_length
         end_y = frog.centery + tongue_dy * tongue_length
 
-        if tongue_active:
+        if game_started and tongue_active:
             if point_line_distance(mosquito.centerx, mosquito.centery,
                                    frog.centerx, frog.centery,
                                    end_x, end_y) < (tongue_width / 2 + mosquito_size / 2):
-                print("Mosquito caught!")
-                running = False
+                game_over = True
 
-        # Update and draw
-        screen.fill((40, 40, 40))
+        # Draw background and characters
+        try:
+            screen.blit(images.game_background, (0, 0))
+        except Exception:
+            screen.fill((40, 40, 40))
+
         screen.blit(images.mosquito_image, mosquito.topleft)
         screen.blit(images.frog_image, frog.topleft)
 
         if tongue_active:
             pygame.draw.line(screen, tongue_color, frog.center, (end_x, end_y), tongue_width)
 
+        # Update and draw humans
         humans.update()
         humans.draw(screen)
 
-        # Collision: mosquito rect with humans -> increment score
+        # Collision: mosquito rect with humans -> increment score and stun
         collected = [h for h in humans if mosquito.colliderect(h.rect)]
         for h in collected:
             h.kill()
         if collected:
             score += len(collected)
-            # apply stun for a short duration
             stunned = True
             stun_end_time = pygame.time.get_ticks() + STUN_MS
             if score >= TARGET_SCORE:
                 game_won = True
                 pygame.time.set_timer(HUMAN_SPAWN_EVENT, 0)
 
-        # UI
+        # UI: countdown, score, stun, win and game over screens
+        if not game_started:
+            countdown_num = max(1, 3 - int(elapsed))
+            countdown_text = ui_font.render(str(countdown_num), True, (255, 255, 255))
+            screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
+
         score_surf = ui_font.render(f"Score: {score}", True, (255, 255, 255))
         screen.blit(score_surf, (10, 10))
 
-        # Stun indicator
         if stunned:
-            stun_surf = ui_font.render("Sucking Blood!", True, (255, 200, 0))
+            stun_surf = ui_font.render("STUNNED!", True, (255, 200, 0))
             screen.blit(stun_surf, (mosquito.centerx - stun_surf.get_width() // 2, mosquito.top - 30))
+
         if game_won:
             win_surf = ui_font.render("You win!", True, (0, 255, 0))
             screen.blit(win_surf, (WIDTH // 2 - win_surf.get_width() // 2, HEIGHT // 2))
+
+        if game_over:
+            overlay = pygame.Surface((WIDTH, HEIGHT))
+            overlay.set_alpha(128)
+            overlay.fill((0, 0, 0))
+            screen.blit(overlay, (0, 0))
+            game_over_text = ui_font.render("Game Over", True, (255, 255, 255))
+            screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
+            mouse_pos = pygame.mouse.get_pos()
+            restart_color = (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0)
+            quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
+            if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            pygame.draw.rect(screen, (0, 255, 0), restart_button)
+            pygame.draw.rect(screen, (255, 0, 0), quit_button)
+            restart_text = ui_font.render("Restart", True, restart_color)
+            quit_text = ui_font.render("Quit", True, quit_color)
+            screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
+            screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
 
         pygame.display.flip()
 
