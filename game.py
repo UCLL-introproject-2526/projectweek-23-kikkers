@@ -3,10 +3,9 @@ import sys
 import random
 import math
 
-<<<<<<< HEAD
-=======
+
 # Code werkt
->>>>>>> b2c4bc6a0c57249dd44c84b6f569bef549692710
+
 WIDTH, HEIGHT = 1024, 768
 FPS = 60
 
