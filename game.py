@@ -2,9 +2,6 @@ import pygame
 import sys
 import random
 import math
-import images
-import pygame, time
-
 
 # Code werkt
 
@@ -13,6 +10,11 @@ FPS = 60
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Frogeato")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("Arial", 32)
+
+import images
 pygame.display.set_caption("Frogeato")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
@@ -206,8 +208,5 @@ pygame.quit()
 sys.exit()
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     main()
-=======
-    main()
->>>>>>> df2fc5cb84aeeeda22ec042cf8a4d3317df4c896
+
