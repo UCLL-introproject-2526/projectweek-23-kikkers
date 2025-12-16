@@ -5,7 +5,9 @@ import math
 import images
 import pygame, time
 
-# Code werkt maar problemen met tong
+
+# Code werkt
+
 WIDTH, HEIGHT = 1024, 768
 FPS = 60
 
@@ -67,9 +69,9 @@ def start_screen(): #Startscherm
                     pygame.quit()
                     sys.exit()
 
-start_screen() #Startscherm einde
+start_screen() 
 
-mosquito_size = 30
+mosquito_size = 70
 mosquito_color = (200, 50, 50)
 mosquito = pygame.Rect(400, 400, mosquito_size, mosquito_size)
 speed = 5
@@ -81,7 +83,6 @@ frog_space = pygame.Rect(0, 0, screen.get_width(), top_margin)
 frog = pygame.Rect(0, 0, frog_size, frog_size)
 frog.center = frog_space.center
 
-# Tongue setup
 tongue_color = (255, 100, 100)
 tongue_active = False
 tongue_length = 0
@@ -89,19 +90,17 @@ max_tongue_length = 800
 tongue_speed = 14
 retracting_speed = 23
 tongue_width = 30
-tongue_dx, tongue_dy = 0, 0  # direction vector
+tongue_dx, tongue_dy = 0, 0  
 retracting = False
 
-# Random attack timer
 attack_timer = random.randint(60, 120)
 
 def point_line_distance(px, py, x1, y1, x2, y2):
-    """Distance from point (px,py) to line segment (x1,y1)-(x2,y2)."""
     line_mag = math.hypot(x2 - x1, y2 - y1)
     if line_mag == 0:
         return math.hypot(px - x1, py - y1)
     u = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / (line_mag ** 2)
-    u = max(min(u, 1), 0)  # clamp between 0 and 1
+    u = max(min(u, 1), 0)  
     closest_x = x1 + u * (x2 - x1)
     closest_y = y1 + u * (y2 - y1)
     return math.hypot(px - closest_x, py - closest_y)
@@ -145,14 +144,12 @@ while running:
     play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
     mosquito.clamp_ip(play_area)
 
-    # Tongue attack logic
     if not tongue_active:
         attack_timer -= 1
         if attack_timer <= 0:
             tongue_active = True
             tongue_length = 0
             retracting = False
-            # Calculate direction vector toward mosquito
             dx = mosquito.centerx - frog.centerx
             dy = mosquito.centery - frog.centery
             dist = math.hypot(dx, dy)
@@ -172,23 +169,19 @@ while running:
                 tongue_active = False
                 tongue_length = 0
 
-        # Tongue endpoint
         end_x = frog.centerx + tongue_dx * tongue_length
         end_y = frog.centery + tongue_dy * tongue_length
 
-        # Collision check: distance from mosquito center to tongue line
         if point_line_distance(mosquito.centerx, mosquito.centery,
                                frog.centerx, frog.centery,
                                end_x, end_y) < (tongue_width / 2 + mosquito_size / 2):
             print("Mosquito caught!")
             running = False
 
-    # Draw everything
     screen.fill((40, 40, 40))
     screen.blit(images.mosquito_image, mosquito.topleft)
     screen.blit(images.frog_image, frog.topleft)
 
-    # Draw tongue last so it stays visible
     if tongue_active:
         pygame.draw.line(
             screen, tongue_color,
