@@ -70,6 +70,8 @@ def start_screen(): #Startscherm
 
 start_screen() 
 
+countdown_start_time = pygame.time.get_ticks()
+
 mosquito_size = 70
 mosquito_color = (200, 50, 50)
 mosquito = pygame.Rect(400, 400, mosquito_size, mosquito_size)
@@ -108,24 +110,28 @@ running = True
 while running:
     clock.tick(FPS)
 
+    elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
+    game_started = elapsed >= 3
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        mosquito.x -= speed
-    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        mosquito.x += speed
-    if keys[pygame.K_UP] or keys[pygame.K_w]:
-        mosquito.y -= speed
-    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        mosquito.y += speed
+    if game_started:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            mosquito.x -= speed
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            mosquito.x += speed
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            mosquito.y -= speed
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            mosquito.y += speed
 
-    play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
-    mosquito.clamp_ip(play_area)
+        play_area = pygame.Rect(0, top_margin, screen.get_width(), screen.get_height() - top_margin)
+        mosquito.clamp_ip(play_area)
 
-    if not tongue_active:
+    if game_started and not tongue_active:
         attack_timer -= 1
         if attack_timer <= 0:
             tongue_active = True
@@ -139,7 +145,7 @@ while running:
             tongue_dy = dy / dist
             attack_timer = random.randint(60, 180)
 
-    if tongue_active:
+    if game_started and tongue_active:
         if not retracting:
             tongue_length += tongue_speed
             if tongue_length >= max_tongue_length:
@@ -170,6 +176,11 @@ while running:
             tongue_width
         )
 
+    if not game_started:
+        countdown_num = max(1, 3 - int(elapsed))
+        countdown_text = font.render(str(countdown_num), True, (255, 255, 255))
+        screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
+
     pygame.display.flip()
 
 pygame.quit()
@@ -177,29 +188,3 @@ sys.exit()
 
 if __name__ == "__main__":
     main()
-
-
-#countdown
-import pygame, time
-
-pygame.init()
-font = pygame.font.Font(None, 100)
-
-count = 3
-start_time = time.time()
-
-while count >= 0:
-    if time.time() - start_time >= 1:
-        start_time = time.time()
-        count -= 1
-
-    screen.fill((0,0,0))
-    if count > 0:
-        text = font.render(str(count), True, (255,255,255))
-    else:
-        text = font.render("GO!", True, (0,255,0))
-
-    screen.blit(text, (200, 150))
-    pygame.display.update()
-
-print("Start")
