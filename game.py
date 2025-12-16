@@ -18,7 +18,7 @@ import images
 def main():
     pygame.init()
 
-def start_screen():  # Startscherm
+def start_screen(): #Startscherm
     button_width = 200
     button_height = 50
     start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
@@ -66,7 +66,7 @@ def start_screen():  # Startscherm
                     pygame.quit()
                     sys.exit()
 
-start_screen()
+start_screen() #Startscherm einde
 
 mosquito_size = 30
 mosquito_color = (200, 50, 50)
@@ -184,3 +184,29 @@ sys.exit()
 
 if __name__ == "__main__":
     main()
+
+
+#countdown
+import pygame, time
+
+pygame.init()
+font = pygame.font.Font(None, 100)
+
+count = 3
+start_time = time.time()
+
+while count >= 0:
+    if time.time() - start_time >= 1:
+        start_time = time.time()
+        count -= 1
+
+    screen.fill((0,0,0))
+    if count > 0:
+        text = font.render(str(count), True, (255,255,255))
+    else:
+        text = font.render("GO!", True, (0,255,0))
+
+    screen.blit(text, (200, 150))
+    pygame.display.update()
+
+print("Start")
