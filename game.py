@@ -158,6 +158,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            game_over = False
+            mosquito = pygame.Rect(400, 100, mosquito_size, mosquito_size)
+            tongue_active = False
+            tongue_length = 0
+            attack_timer = random.randint(60, 120)
+            stun_timer = 0
+            human_spawn_timer = 0
+            score = 0
+            game_won = False
+            humans_group.empty()
+            countdown_start_time = pygame.time.get_ticks()
         if game_over and event.type == pygame.MOUSEBUTTONDOWN:
             if restart_button.collidepoint(event.pos):
                 game_over = False
