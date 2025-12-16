@@ -15,7 +15,7 @@ font = pygame.font.SysFont("Arial", 32)
 
 import images
 
-
+#bomboclaat
 def main():
     pygame.init()
 
