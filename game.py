@@ -2,8 +2,6 @@ import pygame
 import sys
 import random
 import math
-import assets.images
-import images
 
 
 WIDTH, HEIGHT = 1024, 768
@@ -15,13 +13,22 @@ pygame.display.set_caption("Frogeato")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 
+import images
+
 
 
 
 class Human(pygame.sprite.Sprite):
     def __init__(self, width, height, image=None):
         super().__init__()
-        self.image = pygame.transform.scale(assets.images.humanhead, (72, 72))
+        # Load human head image
+        try:
+            self.image = pygame.image.load('assets/images/humanhead.png').convert_alpha()
+            self.image = pygame.transform.scale(self.image, (72, 72))
+        except:
+            # Fallback to colored rectangle if image not found
+            self.image = pygame.Surface((72, 72), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 200, 150), (36, 36), 36)
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, width - self.rect.width)
         self.rect.y = -self.rect.height
