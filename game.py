@@ -4,7 +4,7 @@ import random
 import math
 
 #Code werkt maar problemen met tong 
-WIDTH, HEIGHT = 900, 600
+WIDTH, HEIGHT = 1024, 768
 FPS = 60
 
 pygame.init()
@@ -24,17 +24,28 @@ def start_screen():
     
     while True: #Startscherm
         screen.fill((0, 0, 0))  
+        mouse_pos = pygame.mouse.get_pos()
+        
+        # Hover
+        start_color = (255, 255, 255) if start_button.collidepoint(mouse_pos) else (0, 0, 0)
+        quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
+        
+        if start_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+        
         title_text = font.render("Frog vs Fly Pro Mode", True, (255, 255, 255))
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2 - 60))
         
         # Startknop
         pygame.draw.rect(screen, (0, 255, 0), start_button)
-        start_text = font.render("Start", True, (0, 0, 0))
+        start_text = font.render("Start", True, start_color)
         screen.blit(start_text, (start_button.centerx - start_text.get_width() // 2, start_button.centery - start_text.get_height() // 2))
         
         # Quitknop
         pygame.draw.rect(screen, (255, 0, 0), quit_button)
-        quit_text = font.render("Quit", True, (0, 0, 0))
+        quit_text = font.render("Quit", True, quit_color)
         screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
         
         pygame.display.flip()
