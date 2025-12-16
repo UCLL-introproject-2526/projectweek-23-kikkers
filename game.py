@@ -16,13 +16,13 @@ font = pygame.font.SysFont("Arial", 32)
 def main():
     pygame.init()
 
-def start_screen():
+def start_screen(): #Startscherm
     button_width = 200
     button_height = 50
     start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
     quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
     
-    while True: #Startscherm
+    while True: 
         screen.fill((0, 0, 0))  
         mouse_pos = pygame.mouse.get_pos()
         
@@ -41,7 +41,7 @@ def start_screen():
         # Startknop
         pygame.draw.rect(screen, (0, 255, 0), start_button)
         start_text = font.render("Start", True, start_color)
-        screen.blit(start_text, (start_button.centerx - start_text.get_width() // 2, start_button.centery - start_text.get_height() // 2))
+        screen.blit(start_text, (start_button.centerx-start_text.get_width()//2, start_button.centery-start_text.get_height() // 2))
         
         # Quitknop
         pygame.draw.rect(screen, (255, 0, 0), quit_button)
