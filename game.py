@@ -271,12 +271,12 @@ while running:
     humans_group.draw(screen)
 
     # Draw score HUD
-    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    score_text = font.render(f"Score: {score}", True, (255, 100, 100))
     screen.blit(score_text, (10, 10))
 
     # If stunned, show sucking message above the mosquito
     if stun_timer > 0 and game_started and not game_over:
-        msg = font.render("sucking blood!", True, (255, 255, 255))
+        msg = font.render("sucking blood!", True, (255, 100, 100))
         msg_x = mosquito.centerx - msg.get_width() // 2
         msg_y = max(0, mosquito.top - msg.get_height() - 6)
         screen.blit(msg, (msg_x, msg_y))
