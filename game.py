@@ -18,7 +18,7 @@ import images
 def main():
     pygame.init()
 
-def start_screen(): #Startscherm
+def start_screen(): #Startscherm start
     button_width = 200
     button_height = 50
     start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
@@ -63,7 +63,7 @@ def start_screen(): #Startscherm
                     pygame.quit()
                     sys.exit()  
 
-start_screen()
+start_screen() #Startscherm einde
 
 mosquito_size = 30
 mosquito_color = (200, 50, 50)
