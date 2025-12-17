@@ -1,9 +1,40 @@
 import pygame
+import os
+import pygame
 import sys
 import random
 from entities.fly import Mosquito
 from entities.frog import Frog
-from entities.human import Human
+
+# Provides a simple alternating frame provider for human sprites.
+# Call `get_current_human_frame()` to get a `pygame.Surface` that
+# alternates between the two frames every 1000 ms.
+def get_current_human_frame():
+    global _human_frames
+    if '_human_frames' not in globals():
+        _human_frames = []
+        try:
+            f1 = pygame.image.load(os.path.join('assets', 'images', 'crib_walk.png')).convert_alpha()
+            f2 = pygame.image.load(os.path.join('assets', 'images', 'crib_walk_3.png')).convert_alpha()
+        except Exception:
+            f1 = pygame.Surface((72, 72), pygame.SRCALPHA)
+            f1.fill((200, 50, 50))
+            f2 = f1.copy()
+        f1 = pygame.transform.scale(f1, (72, 72))
+        f2 = pygame.transform.scale(f2, (72, 72))
+        _human_frames = [f1, f2]
+
+    # Alternate frames every 1000 ms
+    idx = (pygame.time.get_ticks() // 800) % len(_human_frames)
+    return _human_frames[idx]
+
+
+if __name__ == '__main__':
+    # Minimal test when running `python main.py` directly
+    pygame.init()
+    # create a tiny surface and blit current frame to verify
+    s = pygame.display.set_mode((1, 1))
+    print('Current human frame ready:', bool(get_current_human_frame()))
 
 
 WIDTH, HEIGHT = 1024, 768
@@ -173,6 +204,8 @@ while running:
         if game_started and not game_over:
             human_spawn_timer += clock.get_time()
             if human_spawn_timer >= human_spawn_interval:
+                # import here to avoid circular import at module load time
+                from entities.human import Human
                 humans_group.add(Human(WIDTH, HEIGHT))
                 human_spawn_timer = 0
         
