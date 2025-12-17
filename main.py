@@ -1,9 +1,10 @@
 import pygame
+import os
+import pygame
 import sys
 import random
 from entities.fly import Mosquito
 from entities.frog import Frog
-from entities.human import Human
 import images
 
 WIDTH, HEIGHT = 1024, 768
@@ -19,6 +20,30 @@ big_font = pygame.font.SysFont("Arial", 64)
 
 # Load images after display is initialized
 images.load_images()
+
+#  #Audio
+#  background_music = "assets/sounds/background_music.mp3"
+#  musquito_sound = pygame.mixer.Sound("assets/sounds/musquito_sound.mp3")
+#  frog_sound = pygame.mixer.Sound("assets/sounds/frog_sound.mp3")
+#  tongue_attack = pygame.mixer.Sound("assets/sounds/tongue_stretching.mp3")
+#  game_over_sound = pygame.mixer.Sound("assets/sounds/fail_sound.mp3")
+#  level_up = pygame.mixer.Sound("assets/sounds/lvl_up_sound.mp3")
+#  victory = pygame.mixer.Sound("assets/sounds/victory_sound.mp3")
+#  death_sound = pygame.mixer.Sound("assets/sounds/death_sound.mp3")
+#  hit_sound = pygame.mixer.Sound("assets/sounds/hit_sound.mp3")
+#  suck_sound = pygame.mixer.Sound("assets/sounds/suck_sound.mp3")
+#  slap_sound = pygame.mixer.Sound("assets/sounds/slap_sound.mp3")
+#  countdown_sound = pygame.mixer.Sound("assets/sounds/countdown.mp3")
+
+#  pygame.mixer.music.load(background_music)
+#  pygame.mixer.music.set_volume(0.5)
+#  pygame.mixer.music.play(-1)  # -1 = loop forever
+
+#  musquito_sound.set_volume(0.3)
+#  musquito_sound.play(-1)
+#  frog_sound.set_volume(0.3)
+#  frog_sound.play(-1)
+
 
 
 def start_screen():
@@ -92,6 +117,10 @@ while running:
     elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
     game_started = elapsed >= 3
 
+    if not game_started and not countdown_played:
+        # countdown_sound.play()
+        countdown_played = True
+
     if stun_timer > 0:
         stun_timer -= clock.get_time()
 
@@ -147,6 +176,8 @@ while running:
         if game_started and not game_over:
             human_spawn_timer += clock.get_time()
             if human_spawn_timer >= human_spawn_interval:
+                # import here to avoid circular import at module load time
+                from entities.human import Human
                 humans_group.add(Human(WIDTH, HEIGHT))
                 human_spawn_timer = 0
         
@@ -160,10 +191,12 @@ while running:
                     human.dying = True
                     human.dying_until = pygame.time.get_ticks() + stun_duration
                     score += 1
+                    # suck_sound.play()
                     stun_timer = stun_duration
                     if score >= win_score:
                         game_over = True
                         game_won = True
+                        # victory.play()
                     break
 
         frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
@@ -182,6 +215,8 @@ while running:
         # Game over when mosquito is pulled into frog's mouth
         if game_started and frog.is_mosquito_eaten():
             game_over = True
+            # death_sound.play()
+            # tongue_attack.play()
 
     screen.blit(images.game_background, (0, 0))
     mosquito.draw(screen)
@@ -261,3 +296,4 @@ while running:
 
 pygame.quit()
 sys.exit()
+
