@@ -10,7 +10,7 @@ frog_tong_image = pygame.transform.scale(frog_tong_image, (170,170))
 mosquito_image = pygame.image.load('assets/images/fly_sprite.png').convert_alpha()
 mosquito_image = pygame.transform.scale(mosquito_image, (70, 70))
 
-game_background = pygame.image.load('assets/images/game background 2.png').convert()
+game_background = pygame.image.load('assets/images/background_moving.gif').convert()
 
 # Human image (optional). Filename contains space: 'human head.png'
 try:
