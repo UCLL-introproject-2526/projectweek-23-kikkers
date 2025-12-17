@@ -211,8 +211,13 @@ while running:
         
         if game_started and not game_over:
             for human in humans_group:
+                # ignore humans already in dying state
+                if getattr(human, 'dying', False):
+                    continue
                 if mosquito.rect.colliderect(human.rect):
-                    human.kill()
+                    # mark human as dying and set expiry timestamp
+                    human.dying = True
+                    human.dying_until = pygame.time.get_ticks() + stun_duration
                     score += 1
                     # suck_sound.play()
                     stun_timer = stun_duration

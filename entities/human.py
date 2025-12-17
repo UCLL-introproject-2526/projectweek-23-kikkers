@@ -23,10 +23,27 @@ class Human(pygame.sprite.Sprite):
         self.rect.x = random.randint(0, width - self.rect.width)
         self.rect.y = -self.rect.height
         self.speed = random.uniform(1.5, 3.5)
+        # dying state: when True, show dying image until `dying_until` timestamp
+        self.dying = False
+        self.dying_until = 0
 
     def update(self):
         """Move human down the screen."""
-        # Update animation frame while preserving position
+        # If dying, show dying image and wait until timer expires, do not move
+        if getattr(self, 'dying', False):
+            try:
+                topleft = self.rect.topleft
+                self.image = images.dying_human
+                self.rect = self.image.get_rect()
+                self.rect.topleft = topleft
+            except Exception:
+                pass
+            # remove when dying period has passed
+            if pygame.time.get_ticks() >= getattr(self, 'dying_until', 0):
+                self.kill()
+            return
+
+        # Normal animation: update frame and move down
         try:
             topleft = self.rect.topleft
             self.image = images.get_current_human_frame()
