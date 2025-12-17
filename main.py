@@ -73,6 +73,17 @@ big_font = pygame.font.SysFont("Arial", 64)
 # frog_sound.play(-1)
 
 import images
+# Load images after the display has been created
+try:
+    images.load_images()
+    # ensure background matches window size
+    try:
+        images.game_background = pygame.transform.scale(images.game_background, (WIDTH, HEIGHT))
+    except Exception:
+        pass
+except Exception:
+    # if loading images fails, leave defaults and allow code to handle None
+    pass
 
 
 def start_screen():
@@ -136,7 +147,9 @@ countdown_played = False
 bottom_margin = 200
 stun_duration = 500
 human_spawn_interval = 5000
-win_score = 10
+win_score = 100
+# Points awarded per human hit. Default: 10% of win_score (so 10 when win_score=100)
+points_per_human = max(1, win_score // 10)
 
 running = True
 while running:
@@ -217,14 +230,15 @@ while running:
         
         if game_started and not game_over:
             for human in humans_group:
-                if mosquito.rect.colliderect(human.rect):
+                # only process collision if human can currently be hit
+                if mosquito.rect.colliderect(human.rect) and getattr(human, 'can_be_hit', True):
                     # show dying image when player touches human, but let it continue falling
                     try:
                         human.touch()
                     except Exception:
                         # fallback: remove if touch() not available
                         human.kill()
-                    score += 1
+                    score += points_per_human
                     # suck_sound.play()
                     stun_timer = stun_duration
                     if score >= win_score:

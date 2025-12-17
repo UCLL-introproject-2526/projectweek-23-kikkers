@@ -27,11 +27,15 @@ class Human(pygame.sprite.Sprite):
         self.touched = False
         self.touched_start = None
         self._touched_image = None
+        # whether this human can be hit by the player (becomes False after dying animation)
+        self.can_be_hit = True
 
     def touch(self):
         """Mark this human as touched by player: show dying image briefly."""
         if not self.touched:
+            # mark as touched and prevent further hits immediately
             self.touched = True
+            self.can_be_hit = False
             self.touched_start = pygame.time.get_ticks()
             try:
                 img = pygame.image.load('assets/images/dying_human.png').convert_alpha()
@@ -55,6 +59,8 @@ class Human(pygame.sprite.Sprite):
                 self.touched = False
                 self.touched_start = None
                 self._touched_image = None
+                # after the dying animation is over, make the human un-hittable
+                self.can_be_hit = False
                 try:
                     topleft = self.rect.topleft
                     self.image = images.get_current_human_frame()
