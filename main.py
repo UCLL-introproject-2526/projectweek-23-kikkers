@@ -213,7 +213,12 @@ while running:
         if game_started and not game_over:
             for human in humans_group:
                 if mosquito.rect.colliderect(human.rect):
-                    human.kill()
+                    # show dying image when player touches human, but let it continue falling
+                    try:
+                        human.touch()
+                    except Exception:
+                        # fallback: remove if touch() not available
+                        human.kill()
                     score += 1
                     # suck_sound.play()
                     stun_timer = stun_duration

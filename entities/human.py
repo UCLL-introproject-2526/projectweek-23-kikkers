@@ -23,19 +23,59 @@ class Human(pygame.sprite.Sprite):
         self.rect.x = random.randint(0, width - self.rect.width)
         self.rect.y = -self.rect.height
         self.speed = random.uniform(1.5, 3.5)
+        # touched state: when player touches the human show dying image briefly
+        self.touched = False
+        self.touched_start = None
+        self._touched_image = None
+
+    def touch(self):
+        """Mark this human as touched by player: show dying image briefly."""
+        if not self.touched:
+            self.touched = True
+            self.touched_start = pygame.time.get_ticks()
+            try:
+                img = pygame.image.load('assets/images/dying_human.png').convert_alpha()
+                img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
+                self._touched_image = img
+                topleft = self.rect.topleft
+                self.image = self._touched_image
+                self.rect = self.image.get_rect()
+                self.rect.topleft = topleft
+            except Exception:
+                # silently ignore image load errors
+                self._touched_image = None
 
     def update(self):
         """Move human down the screen."""
-        # Update animation frame while preserving position
-        try:
-            topleft = self.rect.topleft
-            self.image = images.get_current_human_frame()
-            self.rect = self.image.get_rect()
-            self.rect.topleft = topleft
-        except Exception:
-            pass
+        # If currently in touched state, switch back after 0.5s
+        if self.touched:
+            elapsed = pygame.time.get_ticks() - (self.touched_start or 0)
+            if elapsed >= 500:
+                # restore normal animation frame
+                self.touched = False
+                self.touched_start = None
+                self._touched_image = None
+                try:
+                    topleft = self.rect.topleft
+                    self.image = images.get_current_human_frame()
+                    self.rect = self.image.get_rect()
+                    self.rect.topleft = topleft
+                except Exception:
+                    pass
 
+        # Update animation frame while preserving position if not touched
+        if not self.touched:
+            try:
+                topleft = self.rect.topleft
+                self.image = images.get_current_human_frame()
+                self.rect = self.image.get_rect()
+                self.rect.topleft = topleft
+            except Exception:
+                pass
+
+        # Always continue falling (touch doesn't stop movement)
         self.rect.y += self.speed
+
         # Remove when off bottom of screen
         if self.rect.top > pygame.display.get_surface().get_height():
             self.kill()
