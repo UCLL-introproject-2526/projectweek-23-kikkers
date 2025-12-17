@@ -157,7 +157,19 @@ while running:
 
         frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
         
-        if game_started and frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2):
+        # Check if tongue hit mosquito
+        if game_started and not game_over:
+            frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2)
+        
+        # Check if tongue caught mosquito and update position
+        caught_pos = frog.get_caught_mosquito_position()
+        if caught_pos and not game_over:
+            # Move mosquito to tongue tip position
+            mosquito.rect.centerx = int(caught_pos[0])
+            mosquito.rect.centery = int(caught_pos[1])
+        
+        # Game over when mosquito is pulled into frog's mouth
+        if game_started and frog.is_mosquito_eaten():
             game_over = True
 
     screen.blit(images.game_background, (0, 0))
