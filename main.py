@@ -10,7 +10,7 @@ from entities.frog import Frog
 #poopie
 # Provides a simple alternating frame provider for human sprites.
 # Call `get_current_human_frame()` to get a `pygame.Surface` that
-# alternates between the two frames every 1000 ms.
+# alternates between the two frames every 800 ms.
 def get_current_human_frame():
     global _human_frames
     if '_human_frames' not in globals():
