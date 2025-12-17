@@ -3,6 +3,8 @@ import os
 import pygame
 import sys
 import random
+# Center the pygame window on screen (set before initialization)
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 from entities.fly import Mosquito
 from entities.frog import Frog
 
