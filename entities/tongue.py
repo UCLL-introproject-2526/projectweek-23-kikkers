@@ -51,7 +51,7 @@ class Tongue:
         self.dy = dy / dist
         
         # 65% chance to curve during extension for variety
-        self.has_curve = random.random() < 0.65
+        self.has_curve = random.random() < 0.67
         if self.has_curve:
             self.curve_intensity = random.uniform(0.2, 0.5)
             self.curve_direction = random.choice([-1, 1])
