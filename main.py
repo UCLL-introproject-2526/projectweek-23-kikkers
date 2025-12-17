@@ -49,6 +49,10 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 big_font = pygame.font.SysFont("Arial", 64)
 
+# Load images after display is initialized
+import images
+images.load_images()
+
 # Audio - commented out due to missing sound files
 # background_music = "assets/sounds/background_music.mp3"
 # musquito_sound = pygame.mixer.Sound("assets/sounds/musquito_sound.mp3")
@@ -71,8 +75,6 @@ big_font = pygame.font.SysFont("Arial", 64)
 # musquito_sound.play(-1)
 # frog_sound.set_volume(0.3)
 # frog_sound.play(-1)
-
-import images
 
 
 def start_screen():
