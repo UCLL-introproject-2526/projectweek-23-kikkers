@@ -10,11 +10,35 @@ WIDTH, HEIGHT = 1024, 768
 FPS = 60
 
 pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Frogeato")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 big_font = pygame.font.SysFont("Arial", 64)
+
+# Audio
+background_music = "assets/images/sounds/background_music.mp3"
+musquito_sound = pygame.mixer.Sound("assets/images/sounds/musquito_sound.mp3")
+frog_sound = pygame.mixer.Sound("assets/images/sounds/frog_sound.mp3")
+tongue_attack = pygame.mixer.Sound("assets/images/sounds/tongue_stretching.mp3")
+game_over_sound = pygame.mixer.Sound("assets/images/sounds/fail_sound.mp3")
+level_up = pygame.mixer.Sound("assets/images/sounds/lvl_up_sound.mp3")
+victory = pygame.mixer.Sound("assets/images/sounds/victory_sound.mp3")
+death_sound = pygame.mixer.Sound("assets/images/sounds/death_sound.mp3")
+hit_sound = pygame.mixer.Sound("assets/images/sounds/hit_sound.mp3")
+suck_sound = pygame.mixer.Sound("assets/images/sounds/suck_sound.mp3")
+slap_sound = pygame.mixer.Sound("assets/images/sounds/slap_sound.mp3")
+countdown_sound = pygame.mixer.Sound("assets/images/sounds/countdown.mp3")
+
+pygame.mixer.music.load(background_music)
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.play(-1)  # -1 = loop forever
+
+musquito_sound.set_volume(0.3)
+musquito_sound.play(-1)
+frog_sound.set_volume(0.3)
+frog_sound.play(-1)
 
 import images
 
@@ -76,6 +100,7 @@ start_screen()
 # Game state
 mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
 countdown_start_time = pygame.time.get_ticks()
+countdown_played = False
 bottom_margin = 200
 stun_duration = 500
 human_spawn_interval = 5000
@@ -89,6 +114,10 @@ while running:
     elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
     game_started = elapsed >= 3
 
+    if not game_started and not countdown_played:
+        countdown_sound.play()
+        countdown_played = True
+
     if stun_timer > 0:
         stun_timer -= clock.get_time()
 
@@ -98,6 +127,7 @@ while running:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
             countdown_start_time = pygame.time.get_ticks()
+            countdown_played = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and game_started and not game_over:
             if paused:
                 paused = False
@@ -110,6 +140,7 @@ while running:
             if restart_button.collidepoint(event.pos):
                 mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
                 countdown_start_time = pygame.time.get_ticks()
+                countdown_played = False
             if resume_button.collidepoint(event.pos):
                 pause_countdown_start = pygame.time.get_ticks()
             if quit_button.collidepoint(event.pos):
@@ -120,6 +151,7 @@ while running:
             if restart_button.collidepoint(event.pos):
                 mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
                 countdown_start_time = pygame.time.get_ticks()
+                countdown_played = False
             if quit_button.collidepoint(event.pos):
                 running = False
 
@@ -149,16 +181,20 @@ while running:
                 if mosquito.rect.colliderect(human.rect):
                     human.kill()
                     score += 1
+                    suck_sound.play()
                     stun_timer = stun_duration
                     if score >= win_score:
                         game_over = True
                         game_won = True
+                        victory.play()
                     break
 
         frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
         
         if game_started and frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2):
             game_over = True
+            death_sound.play()
+            tongue_attack.play()
 
     screen.blit(images.game_background, (0, 0))
     mosquito.draw(screen)
@@ -238,3 +274,4 @@ while running:
 
 pygame.quit()
 sys.exit()
+
