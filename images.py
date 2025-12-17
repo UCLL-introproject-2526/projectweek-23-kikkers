@@ -1,16 +1,16 @@
 import pygame
 
 # Load and scale images
-frog_image = pygame.image.load('assets/images/kikker_zonder_tong.png').convert_alpha()
-frog_image = pygame.transform.scale(frog_image, (170, 170))
+frog_image = pygame.image.load('assets/images/frog.png').convert_alpha()
+frog_image = pygame.transform.scale(frog_image, (300, 200))
 
-frog_tong_image = pygame.image.load('assets/images/kikker_met_tong.png').convert_alpha()
-frog_tong_image = pygame.transform.scale(frog_tong_image, (170,170))
+frog_tong_image = pygame.image.load('assets/images/frog.png').convert_alpha()
+frog_tong_image = pygame.transform.scale(frog_tong_image, (300,200))
 
-mosquito_image = pygame.image.load('assets/images/fly_sprite.png').convert_alpha()
+mosquito_image = pygame.image.load('assets/images/fly.png').convert_alpha()
 mosquito_image = pygame.transform.scale(mosquito_image, (70, 70))
 
-game_background = pygame.image.load('assets/images/background_moving.gif')
+game_background = pygame.image.load('assets/images/swamp.png')
 
 # Human image (optional). Filename contains space: 'human head.png'
 try:
