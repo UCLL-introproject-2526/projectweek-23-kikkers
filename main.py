@@ -49,6 +49,10 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 big_font = pygame.font.SysFont("Arial", 64)
 
+# Load images after display is initialized
+import images
+images.load_images()
+
 # Audio - commented out due to missing sound files
 # background_music = "assets/sounds/background_music.mp3"
 # musquito_sound = pygame.mixer.Sound("assets/sounds/musquito_sound.mp3")
@@ -71,19 +75,6 @@ big_font = pygame.font.SysFont("Arial", 64)
 # musquito_sound.play(-1)
 # frog_sound.set_volume(0.3)
 # frog_sound.play(-1)
-
-import images
-# Load images after the display has been created
-try:
-    images.load_images()
-    # ensure background matches window size
-    try:
-        images.game_background = pygame.transform.scale(images.game_background, (WIDTH, HEIGHT))
-    except Exception:
-        pass
-except Exception:
-    # if loading images fails, leave defaults and allow code to handle None
-    pass
 
 
 def start_screen():
@@ -211,7 +202,7 @@ while running:
     
     # Play frog sound every 5 seconds during gameplay
     current_time = pygame.time.get_ticks()
-
+    
     if not paused and pause_countdown_start == 0:
         if game_started and not game_over:
             if stun_timer <= 0:
