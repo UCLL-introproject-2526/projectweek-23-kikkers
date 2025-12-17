@@ -113,11 +113,12 @@ class Frog:
             self.preparation_timer -= 1
             self.eye_glow = min(255, self.eye_glow + 15)
             self.body_tension = min(1.0, self.body_tension + 0.08)
-            
             if self.preparation_timer <= 0:
                 # STRIKE! Predict where mosquito will be
                 predicted_target = self._predict_mosquito_position(mosquito_center)
-                self.tongue.shoot(self.rect.center, predicted_target)
+                # compute mouth position (slightly above center)
+                mouth_pos = (self.rect.centerx, int(self.rect.top + self.rect.height * 0.28))
+                self.tongue.shoot(mouth_pos, predicted_target)
                 self.state = "attacking"
                 self.attack_timer = random.randint(30, 60)  # Quick cooldown for multiple shots
     
@@ -195,8 +196,9 @@ class Frog:
             
             screen.blit(glow_surface, self.rect.topleft)
         
-        # Update tongue center before drawing
-        self.tongue.frog_center = self.rect.center
+        # Update tongue center (mouth position) before drawing
+        mouth_pos = (self.rect.centerx, int(self.rect.top + self.rect.height * 0.28))
+        self.tongue.frog_center = mouth_pos
         self.tongue.draw(screen)
     
     def reset(self):

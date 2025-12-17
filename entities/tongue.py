@@ -225,9 +225,8 @@ class Tongue:
                 pygame.draw.circle(screen, self.tip_color, tip_pos, self.width // 2 + 2)
                 pygame.draw.circle(screen, (255, 150, 150), tip_pos, self.width // 3)
                 
-                # Draw mouth connection point
-                mouth_offset_y = 15  # Tongue comes from lower part of frog
-                mouth_pos = (int(self.frog_center[0]), int(self.frog_center[1] + mouth_offset_y))
+                # Draw mouth connection point at frog's mouth (frog_center)
+                mouth_pos = (int(self.frog_center[0]), int(self.frog_center[1]))
                 pygame.draw.circle(screen, (220, 80, 80), mouth_pos, self.width // 2)
         
         # Draw sticky particles
