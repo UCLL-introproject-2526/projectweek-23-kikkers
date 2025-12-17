@@ -7,7 +7,7 @@ import random
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 from entities.fly import Mosquito
 from entities.frog import Frog
-
+#poopie
 # Provides a simple alternating frame provider for human sprites.
 # Call `get_current_human_frame()` to get a `pygame.Surface` that
 # alternates between the two frames every 1000 ms.
