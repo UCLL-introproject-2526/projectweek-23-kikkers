@@ -17,28 +17,28 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 big_font = pygame.font.SysFont("Arial", 64)
 
-# Audio
-background_music = "assets/images/sounds/background_music.mp3"
-musquito_sound = pygame.mixer.Sound("assets/images/sounds/musquito_sound.mp3")
-frog_sound = pygame.mixer.Sound("assets/images/sounds/frog_sound.mp3")
-tongue_attack = pygame.mixer.Sound("assets/images/sounds/tongue_stretching.mp3")
-game_over_sound = pygame.mixer.Sound("assets/images/sounds/fail_sound.mp3")
-level_up = pygame.mixer.Sound("assets/images/sounds/lvl_up_sound.mp3")
-victory = pygame.mixer.Sound("assets/images/sounds/victory_sound.mp3")
-death_sound = pygame.mixer.Sound("assets/images/sounds/death_sound.mp3")
-hit_sound = pygame.mixer.Sound("assets/images/sounds/hit_sound.mp3")
-suck_sound = pygame.mixer.Sound("assets/images/sounds/suck_sound.mp3")
-slap_sound = pygame.mixer.Sound("assets/images/sounds/slap_sound.mp3")
-countdown_sound = pygame.mixer.Sound("assets/images/sounds/countdown.mp3")
+# Audio - commented out due to missing sound files
+# background_music = "assets/images/sounds/background_music.mp3"
+# musquito_sound = pygame.mixer.Sound("assets/images/sounds/musquito_sound.mp3")
+# frog_sound = pygame.mixer.Sound("assets/images/sounds/frog_sound.mp3")
+# tongue_attack = pygame.mixer.Sound("assets/images/sounds/tongue_stretching.mp3")
+# game_over_sound = pygame.mixer.Sound("assets/images/sounds/fail_sound.mp3")
+# level_up = pygame.mixer.Sound("assets/images/sounds/lvl_up_sound.mp3")
+# victory = pygame.mixer.Sound("assets/images/sounds/victory_sound.mp3")
+# death_sound = pygame.mixer.Sound("assets/images/sounds/death_sound.mp3")
+# hit_sound = pygame.mixer.Sound("assets/images/sounds/hit_sound.mp3")
+# suck_sound = pygame.mixer.Sound("assets/images/sounds/suck_sound.mp3")
+# slap_sound = pygame.mixer.Sound("assets/images/sounds/slap_sound.mp3")
+# countdown_sound = pygame.mixer.Sound("assets/images/sounds/countdown.mp3")
 
-pygame.mixer.music.load(background_music)
-pygame.mixer.music.set_volume(0.5)
-pygame.mixer.music.play(-1)  # -1 = loop forever
+# pygame.mixer.music.load(background_music)
+# pygame.mixer.music.set_volume(0.5)
+# pygame.mixer.music.play(-1)  # -1 = loop forever
 
-musquito_sound.set_volume(0.3)
-musquito_sound.play(-1)
-frog_sound.set_volume(0.3)
-frog_sound.play(-1)
+# musquito_sound.set_volume(0.3)
+# musquito_sound.play(-1)
+# frog_sound.set_volume(0.3)
+# frog_sound.play(-1)
 
 import images
 
@@ -115,7 +115,7 @@ while running:
     game_started = elapsed >= 3
 
     if not game_started and not countdown_played:
-        countdown_sound.play()
+        # countdown_sound.play()
         countdown_played = True
 
     if stun_timer > 0:
@@ -181,12 +181,12 @@ while running:
                 if mosquito.rect.colliderect(human.rect):
                     human.kill()
                     score += 1
-                    suck_sound.play()
+                    # suck_sound.play()
                     stun_timer = stun_duration
                     if score >= win_score:
                         game_over = True
                         game_won = True
-                        victory.play()
+                        # victory.play()
                     break
 
         frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
@@ -205,8 +205,8 @@ while running:
         # Game over when mosquito is pulled into frog's mouth
         if game_started and frog.is_mosquito_eaten():
             game_over = True
-            death_sound.play()
-            tongue_attack.play()
+            # death_sound.play()
+            # tongue_attack.play()
 
     screen.blit(images.game_background, (0, 0))
     mosquito.draw(screen)
