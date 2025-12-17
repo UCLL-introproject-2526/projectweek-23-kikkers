@@ -14,6 +14,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Frogeato")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
+big_font = pygame.font.SysFont("Arial", 64)
 
 import images
 
@@ -67,13 +68,13 @@ def reset_game():
     frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
     frog.set_image(images.frog_image)
     humans_group = pygame.sprite.Group()
-    return mosquito, frog, humans_group, 0, 0, 0, False, False
+    return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
 
 
 start_screen()
 
 # Game state
-mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over = reset_game()
+mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
 countdown_start_time = pygame.time.get_ticks()
 bottom_margin = 200
 stun_duration = 500
@@ -95,45 +96,69 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-            mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over = reset_game()
+            mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
             countdown_start_time = pygame.time.get_ticks()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and game_started and not game_over:
+            if paused:
+                paused = False
+            else:
+                paused = True
+        if paused and event.type == pygame.MOUSEBUTTONDOWN:
+            restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 80, 40)
+            resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 80, 40)
+            quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 80, 40)
+            if restart_button.collidepoint(event.pos):
+                mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+                countdown_start_time = pygame.time.get_ticks()
+            if resume_button.collidepoint(event.pos):
+                pause_countdown_start = pygame.time.get_ticks()
+            if quit_button.collidepoint(event.pos):
+                running = False
         if game_over and event.type == pygame.MOUSEBUTTONDOWN:
             restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 80, 40)
             quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 80, 40)
             if restart_button.collidepoint(event.pos):
-                mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over = reset_game()
+                mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
                 countdown_start_time = pygame.time.get_ticks()
             if quit_button.collidepoint(event.pos):
                 running = False
 
-    if game_started and not game_over:
-        if stun_timer <= 0:
-            mosquito.handle_input(pygame.key.get_pressed())
-        mosquito.clamp_to_area(pygame.Rect(0, 0, WIDTH, HEIGHT - bottom_margin))
+    pause_countdown_elapsed = 0
+    if pause_countdown_start > 0:
+        pause_countdown_elapsed = (pygame.time.get_ticks() - pause_countdown_start) / 1000
+        if pause_countdown_elapsed >= 3:
+            paused = False
+            pause_countdown_start = 0
 
-    humans_group.update()
-    
-    if game_started and not game_over:
-        human_spawn_timer += clock.get_time()
-        if human_spawn_timer >= human_spawn_interval:
-            humans_group.add(Human(WIDTH, HEIGHT))
-            human_spawn_timer = 0
-    
-    if game_started and not game_over:
-        for human in humans_group:
-            if mosquito.rect.colliderect(human.rect):
-                human.kill()
-                score += 1
-                stun_timer = stun_duration
-                if score >= win_score:
-                    game_over = True
-                    game_won = True
-                break
+    if not paused and pause_countdown_start == 0:
+        if game_started and not game_over:
+            if stun_timer <= 0:
+                mosquito.handle_input(pygame.key.get_pressed())
+            mosquito.clamp_to_area(pygame.Rect(0, 0, WIDTH, HEIGHT - bottom_margin))
 
-    frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
-    
-    if game_started and frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2):
-        game_over = True
+        humans_group.update()
+        
+        if game_started and not game_over:
+            human_spawn_timer += clock.get_time()
+            if human_spawn_timer >= human_spawn_interval:
+                humans_group.add(Human(WIDTH, HEIGHT))
+                human_spawn_timer = 0
+        
+        if game_started and not game_over:
+            for human in humans_group:
+                if mosquito.rect.colliderect(human.rect):
+                    human.kill()
+                    score += 1
+                    stun_timer = stun_duration
+                    if score >= win_score:
+                        game_over = True
+                        game_won = True
+                    break
+
+        frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
+        
+        if game_started and frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2):
+            game_over = True
 
     screen.blit(images.game_background, (0, 0))
     mosquito.draw(screen)
@@ -143,6 +168,35 @@ while running:
     score_text = font.render(f"Score: {score}", True, (255, 100, 100))
     screen.blit(score_text, (10, 10))
 
+    if paused:
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        pause_text = font.render("Paused", True, (255, 255, 255))
+        screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 100))
+        
+        restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 80, 40)
+        resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 80, 40)
+        quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 80, 40)
+        mouse_pos = pygame.mouse.get_pos()
+        
+        if restart_button.collidepoint(mouse_pos) or resume_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        
+        pygame.draw.rect(screen, (0, 255, 0), restart_button)
+        pygame.draw.rect(screen, (0, 255, 0), resume_button)
+        pygame.draw.rect(screen, (255, 0, 0), quit_button)
+        
+        restart_text = font.render("Restart", True, (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0))
+        resume_text = font.render("Resume", True, (255, 255, 255) if resume_button.collidepoint(mouse_pos) else (0, 0, 0))
+        quit_text = font.render("Quit", True, (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0))
+        
+        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
+        screen.blit(resume_text, (resume_button.centerx - resume_text.get_width() // 2, resume_button.centery - resume_text.get_height() // 2))
+        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
+
     if stun_timer > 0 and game_started and not game_over:
         msg = font.render("sucking blood!", True, (255, 100, 100))
         screen.blit(msg, (mosquito.centerx - msg.get_width() // 2, max(0, mosquito.rect.top - msg.get_height() - 6)))
@@ -150,6 +204,10 @@ while running:
     if not game_started:
         countdown_text = font.render(str(max(1, 3 - int(elapsed))), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
+
+    if pause_countdown_start > 0:
+        countdown_text = big_font.render(str(max(1, 3 - int(pause_countdown_elapsed))), True, (255, 255, 255))
+        screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - 150))
 
     if game_over:
         overlay = pygame.Surface((WIDTH, HEIGHT))
