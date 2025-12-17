@@ -1,42 +1,10 @@
 import pygame
-import os
-import pygame
 import sys
 import random
 from entities.fly import Mosquito
 from entities.frog import Frog
-os.environ['SDL_VIDEO_CENTERED'] = '1'
-#poopie
-# Provides a simple alternating frame provider for human sprites.
-# Call `get_current_human_frame()` to get a `pygame.Surface` that
-# alternates between the two frames every 800 ms.
-def get_current_human_frame():
-    global _human_frames
-    if '_human_frames' not in globals():
-        _human_frames = []
-        try:
-            f1 = pygame.image.load(os.path.join('assets', 'images', 'crib_walk.png')).convert_alpha()
-            f2 = pygame.image.load(os.path.join('assets', 'images', 'crib_walk_3.png')).convert_alpha()
-        except Exception:
-            f1 = pygame.Surface((72, 72), pygame.SRCALPHA)
-            f1.fill((200, 50, 50))
-            f2 = f1.copy()
-        f1 = pygame.transform.scale(f1, (72, 72))
-        f2 = pygame.transform.scale(f2, (72, 72))
-        _human_frames = [f1, f2]
-
-    # Alternate frames every 1000 ms
-    idx = (pygame.time.get_ticks() // 800) % len(_human_frames)
-    return _human_frames[idx]
-
-
-if __name__ == '__main__':
-    # Minimal test when running `python main.py` directly
-    pygame.init()
-    # create a tiny surface and blit current frame to verify
-    s = pygame.display.set_mode((1, 1))
-    print('Current human frame ready:', bool(get_current_human_frame()))
-
+from entities.human import Human
+import images
 
 WIDTH, HEIGHT = 1024, 768
 FPS = 60
@@ -49,30 +17,8 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 big_font = pygame.font.SysFont("Arial", 64)
 
-# Audio - commented out due to missing sound files
-# background_music = "assets/sounds/background_music.mp3"
-# musquito_sound = pygame.mixer.Sound("assets/sounds/musquito_sound.mp3")
-# frog_sound = pygame.mixer.Sound("assets/sounds/frog_sound.mp3")
-# tongue_attack = pygame.mixer.Sound("assets/sounds/tongue_stretching.mp3")
-# game_over_sound = pygame.mixer.Sound("assets/sounds/fail_sound.mp3")
-# level_up = pygame.mixer.Sound("assets/sounds/lvl_up_sound.mp3")
-# victory = pygame.mixer.Sound("assets/sounds/victory_sound.mp3")
-# death_sound = pygame.mixer.Sound("assets/sounds/death_sound.mp3")
-# hit_sound = pygame.mixer.Sound("assets/sounds/hit_sound.mp3")
-# suck_sound = pygame.mixer.Sound("assets/sounds/suck_sound.mp3")
-# slap_sound = pygame.mixer.Sound("assets/sounds/slap_sound.mp3")
-# countdown_sound = pygame.mixer.Sound("assets/sounds/countdown.mp3")
-
-# pygame.mixer.music.load(background_music)
-# pygame.mixer.music.set_volume(0.5)
-# pygame.mixer.music.play(-1)  # -1 = loop forever
-
-# musquito_sound.set_volume(0.3)
-# musquito_sound.play(-1)
-# frog_sound.set_volume(0.3)
-# frog_sound.play(-1)
-
-import images
+# Load images after display is initialized
+images.load_images()
 
 
 def start_screen():
@@ -146,10 +92,6 @@ while running:
     elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
     game_started = elapsed >= 3
 
-    if not game_started and not countdown_played:
-        # countdown_sound.play()
-        countdown_played = True
-
     if stun_timer > 0:
         stun_timer -= clock.get_time()
 
@@ -194,11 +136,6 @@ while running:
             paused = False
             pause_countdown_start = 0
 
-    import audio
-    
-    # Play frog sound every 5 seconds during gameplay
-    current_time = pygame.time.get_ticks()
-
     if not paused and pause_countdown_start == 0:
         if game_started and not game_over:
             if stun_timer <= 0:
@@ -210,45 +147,47 @@ while running:
         if game_started and not game_over:
             human_spawn_timer += clock.get_time()
             if human_spawn_timer >= human_spawn_interval:
-                # import here to avoid circular import at module load time
-                from entities.human import Human
                 humans_group.add(Human(WIDTH, HEIGHT))
                 human_spawn_timer = 0
         
         if game_started and not game_over:
             for human in humans_group:
+                # ignore humans already in dying state
+                if getattr(human, 'dying', False):
+                    continue
                 if mosquito.rect.colliderect(human.rect):
-                    human.kill()
+                    # mark human as dying and set expiry timestamp
+                    human.dying = True
+                    human.dying_until = pygame.time.get_ticks() + stun_duration
                     score += 1
-                    # suck_sound.play()
                     stun_timer = stun_duration
                     if score >= win_score:
                         game_over = True
                         game_won = True
-                        # victory.play()
                     break
-        frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
 
+        frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
+        
         # Check if tongue hit mosquito
         if game_started and not game_over:
             frog.check_hit((mosquito.centerx, mosquito.centery), mosquito.size / 2)
+        
         # Check if tongue caught mosquito and update position
         caught_pos = frog.get_caught_mosquito_position()
         if caught_pos and not game_over:
             # Move mosquito to tongue tip position
             mosquito.rect.centerx = int(caught_pos[0])
             mosquito.rect.centery = int(caught_pos[1])
+        
         # Game over when mosquito is pulled into frog's mouth
         if game_started and frog.is_mosquito_eaten():
             game_over = True
-            # death_sound.play()
-            # tongue_attack.play()
 
     screen.blit(images.game_background, (0, 0))
     mosquito.draw(screen)
     frog.draw(screen)
-
     humans_group.draw(screen)
+
     score_text = font.render(f"Score: {score}", True, (255, 100, 100))
     screen.blit(score_text, (10, 10))
 
@@ -322,4 +261,3 @@ while running:
 
 pygame.quit()
 sys.exit()
-
