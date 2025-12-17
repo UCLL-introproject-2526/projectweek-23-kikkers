@@ -15,9 +15,9 @@ class Mosquito:
         # Physics-based movement
         self.vx = 0  # Velocity X
         self.vy = 0  # Velocity Y
-        self.acceleration = 0.8  # How fast it speeds up
-        self.friction = 0.92  # Air resistance (0.92 = slow down by 8% per frame)
-        self.max_speed = 7  # Maximum velocity
+        self.acceleration = 6  # How fast it speeds up
+        self.friction = 0,8  # Air resistance (0.92 = slow down by 8% per frame)
+        self.max_speed = 15  # Maximum velocity
         
         # Realistic flying wobble
         self.wobble_timer = 0
