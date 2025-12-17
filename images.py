@@ -38,11 +38,3 @@ def get_current_human_frame():
     # Alternate frames every 1000 ms
     idx = (pygame.time.get_ticks() // 1000) % len(_human_walk_frames)
     return _human_walk_frames[idx]
-
-# Dying human image (displayed while mosquito is sucking blood)
-try:
-    dying_human = pygame.image.load('assets/images/dying_human.png').convert_alpha()
-    dying_human = pygame.transform.scale(dying_human, (_human_walk_frames[0].get_width(), _human_walk_frames[0].get_height()))
-except Exception:
-    dying_human = pygame.Surface((_human_walk_frames[0].get_width(), _human_walk_frames[0].get_height()), pygame.SRCALPHA)
-    pygame.draw.rect(dying_human, (150, 30, 30), dying_human.get_rect())
