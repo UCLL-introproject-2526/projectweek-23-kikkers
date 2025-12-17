@@ -198,9 +198,6 @@ while running:
     
     # Play frog sound every 5 seconds during gameplay
     current_time = pygame.time.get_ticks()
-    if current_time - last_frog_sound_time > 5000 and game_started and not game_over and not paused:
-        audio.frog_sound.play()
-        last_frog_sound_time = current_time
 
     if not paused and pause_countdown_start == 0:
         if game_started and not game_over:
