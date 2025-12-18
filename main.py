@@ -4,9 +4,9 @@ import pygame
 import sys
 import random
 import audio
+import asyncio
 from entities.fly import Mosquito
 from entities.frog import Frog
-import asyncio
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 #poopie
 # Provides a simple alternating frame provider for human sprites.
@@ -32,38 +32,42 @@ def get_current_human_frame():
     return _human_frames[idx]
 
 
-async def main():
+if __name__ == '__main__':
     # Minimal test when running `python main.py` directly
     pygame.init()
     # create a tiny surface and blit current frame to verify
     s = pygame.display.set_mode((1, 1))
     print('Current human frame ready:', bool(get_current_human_frame()))
 
-    WIDTH, HEIGHT = 1024, 768
-    FPS = 60
 
-pygame.init()
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Frogeato")
-clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial", 32)
-big_font = pygame.font.SysFont("Arial", 64)
+WIDTH, HEIGHT = 1024, 768
+FPS = 60
 
-    # Load images after display is initialized
-    import images
-    images.load_images()
+    pygame.init()
+    pygame.mixer.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Frogeato")
+    clock = pygame.time.Clock()
+    # Silkscreen retro pixel font for authentic arcade feel
+    font = pygame.font.Font("Silkscreen-Regular.ttf", 20)
+    big_font = pygame.font.Font("Silkscreen-Regular.ttf", 40)
+    score_font = pygame.font.Font("Silkscreen-Regular.ttf", 28)
+    title_font = pygame.font.Font("Silkscreen-Regular.ttf", 72)  # HUGE title font
+
+# Load images after display is initialized
+import images
+images.load_images()
 
 
-def start_screen():
-    button_width = 200
-    button_height = 50
-    start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
-    quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
+    async def start_screen():
+        button_width = 260
+        button_height = 70
+        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 60, button_width, button_height)
+        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 150, button_width, button_height)
 
-        while True:
-            screen.blit(images.game_background, (0, 0))
-            mouse_pos = pygame.mouse.get_pos()
+    while True:
+        screen.blit(images.game_background, (0, 0))
+        mouse_pos = pygame.mouse.get_pos()
 
         start_color = (255, 255, 255) if start_button.collidepoint(mouse_pos) else (0, 0, 0)
         quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
@@ -98,17 +102,18 @@ def start_screen():
                         sys.exit()
 
 
-    def reset_game():
-        mosquito = Mosquito(400, 100, size=70)
-        mosquito.set_image(images.mosquito_image)
-        mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
-        frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
-        frog.set_image(images.frog_image)
-        frog.set_open_image(images.frog_tong_image)
-        humans_group = pygame.sprite.Group()
-        return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
+def reset_game():
+    mosquito = Mosquito(400, 100, size=70)
+    mosquito.set_image(images.mosquito_image)
+    mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
+    frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
+    frog.set_image(images.frog_image)
+    frog.set_open_image(images.frog_tong_image)
+    humans_group = pygame.sprite.Group()
+    return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
 
 
+async def main():
     await start_screen()
 
     # Game state
@@ -122,9 +127,9 @@ def start_screen():
     # Points awarded per human hit. Default: 10% of win_score (so 10 when win_score=100)
     points_per_human = max(1, win_score // 10)
 
-running = True
-while running:
-    clock.tick(FPS)
+    running = True
+    while running:
+        clock.tick(FPS)
     pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
         elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
@@ -236,74 +241,132 @@ while running:
         frog.draw(screen)
 
     humans_group.draw(screen)
-    score_text = font.render(f"Score: {score}", True, (255, 100, 100))
-    screen.blit(score_text, (10, 10))
+    
+    # Pixelated swamp-style score display
+    score_bg = pygame.Surface((200, 50))
+    score_bg.fill((20, 40, 20))  # Dark swamp green background
+    score_bg.set_alpha(180)
+    screen.blit(score_bg, (5, 5))
+    
+    score_text = score_font.render(f"SCORE:{score}", False, (150, 255, 100))  # Bright swamp green
+    screen.blit(score_text, (12, 12))
 
     if paused:
+        # Dark swampy overlay
         overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.set_alpha(128)
-        overlay.fill((0, 0, 0))
+        overlay.set_alpha(180)
+        overlay.fill((10, 25, 10))
         screen.blit(overlay, (0, 0))
         
-        pause_text = font.render("Paused", True, (255, 255, 255))
+        # PAUSED title with swamp style
+        pause_text = big_font.render("PAUSED", False, (200, 255, 150))
+        pause_bg = pygame.Surface((pause_text.get_width() + 40, pause_text.get_height() + 20))
+        pause_bg.fill((30, 60, 30))
+        pause_bg.set_alpha(220)
+        screen.blit(pause_bg, (WIDTH // 2 - pause_text.get_width() // 2 - 20, HEIGHT // 2 - 110))
         screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 100))
+        pygame.draw.rect(screen, (150, 255, 100), 
+                        pygame.Rect(WIDTH // 2 - pause_text.get_width() // 2 - 20, HEIGHT // 2 - 110,
+                                   pause_text.get_width() + 40, pause_text.get_height() + 20), 5)
         
-        restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 110, 40)
-        resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 110, 40)
-        quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 110, 40)
+        # Pixelated swamp-styled buttons
+        restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 110, 50)
+        resume_button = pygame.Rect(WIDTH//2 - 55, HEIGHT//2, 110, 50)
+        quit_button = pygame.Rect(WIDTH//2 + 70, HEIGHT//2, 110, 50)
         mouse_pos = pygame.mouse.get_pos()
         
-        if restart_button.collidepoint(mouse_pos) or resume_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+        # RESTART button
+        restart_hover = restart_button.collidepoint(mouse_pos)
+        pygame.draw.rect(screen, (80, 180, 60) if restart_hover else (50, 140, 40), restart_button)
+        pygame.draw.rect(screen, (150, 255, 100) if restart_hover else (100, 200, 80), restart_button, 4)
+        restart_text = font.render("Restart", False, (255, 255, 255) if restart_hover else (200, 255, 180))
+        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2,
+                                   restart_button.centery - restart_text.get_height() // 2))
+        
+        # RESUME button
+        resume_hover = resume_button.collidepoint(mouse_pos)
+        pygame.draw.rect(screen, (80, 180, 60) if resume_hover else (50, 140, 40), resume_button)
+        pygame.draw.rect(screen, (150, 255, 100) if resume_hover else (100, 200, 80), resume_button, 4)
+        resume_text = font.render("Resume", False, (255, 255, 255) if resume_hover else (200, 255, 180))
+        screen.blit(resume_text, (resume_button.centerx - resume_text.get_width() // 2,
+                                  resume_button.centery - resume_text.get_height() // 2))
+        
+        # QUIT button
+        quit_hover = quit_button.collidepoint(mouse_pos)
+        pygame.draw.rect(screen, (180, 80, 60) if quit_hover else (140, 50, 40), quit_button)
+        pygame.draw.rect(screen, (255, 150, 100) if quit_hover else (200, 100, 80), quit_button, 4)
+        quit_text = font.render("Quit", False, (255, 255, 255) if quit_hover else (255, 200, 180))
+        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2,
+                                quit_button.centery - quit_text.get_height() // 2))
+        
+        if restart_hover or resume_hover or quit_hover:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-        
-        pygame.draw.rect(screen, (0, 255, 0), restart_button)
-        pygame.draw.rect(screen, (0, 255, 0), resume_button)
-        pygame.draw.rect(screen, (255, 0, 0), quit_button)
-        
-        restart_text = font.render("Restart", True, (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0))
-        resume_text = font.render("Resume", True, (255, 255, 255) if resume_button.collidepoint(mouse_pos) else (0, 0, 0))
-        quit_text = font.render("Quit", True, (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0))
-        
-        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
-        screen.blit(resume_text, (resume_button.centerx - resume_text.get_width() // 2, resume_button.centery - resume_text.get_height() // 2))
-        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
 
     if stun_timer > 0 and game_started and not game_over:
-        msg = font.render("sucking blood!", True, (255, 100, 100))
+        msg = font.render("sucking blood!", False, (255, 100, 100))
         screen.blit(msg, (mosquito.centerx - msg.get_width() // 2, max(0, mosquito.rect.top - msg.get_height() - 6)))
 
     if not game_started:
-        countdown_text = font.render(str(max(1, 3 - int(elapsed))), True, (255, 255, 255))
+        countdown_text = font.render(str(max(1, 3 - int(elapsed))), False, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
 
     if pause_countdown_start > 0:
-        countdown_text = big_font.render(str(max(1, 3 - int(pause_countdown_elapsed))), True, (255, 255, 255))
+        countdown_text = big_font.render(str(max(1, 3 - int(pause_countdown_elapsed))), False, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - 150))
 
     if game_over:
+        # Dark swampy overlay
         overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.set_alpha(128)
-        overlay.fill((0, 0, 0))
+        overlay.set_alpha(180)
+        overlay.fill((10, 25, 10))  # Dark swamp green
         screen.blit(overlay, (0, 0))
         
-        game_over_text = font.render("You Win!" if game_won else "Game Over", True, (255, 255, 255))
-        screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
+        # HUGE game over title with pixelated swamp style
+        game_over_message = "YOU WIN!" if game_won else "GAME OVER"
+        game_over_text = title_font.render(game_over_message, False, (255, 255, 100) if game_won else (255, 100, 100))
         
-        restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 110, 40)
-        quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 110, 40)
+        # Background panel for game over text
+        game_over_bg = pygame.Surface((game_over_text.get_width() + 60, game_over_text.get_height() + 30))
+        game_over_bg.fill((30, 60, 30) if game_won else (60, 30, 30))  # Swamp colored
+        game_over_bg.set_alpha(220)
+        screen.blit(game_over_bg, (WIDTH // 2 - game_over_text.get_width() // 2 - 30, HEIGHT // 2 - 150))
+        screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 135))
+        
+        # Thick pixelated border around game over text
+        game_over_border = pygame.Rect(WIDTH // 2 - game_over_text.get_width() // 2 - 30, HEIGHT // 2 - 150,
+                                        game_over_text.get_width() + 60, game_over_text.get_height() + 30)
+        border_color = (200, 255, 150) if game_won else (255, 150, 150)
+        pygame.draw.rect(screen, border_color, game_over_border, 6)
+        
+        # Pixelated swamp-styled buttons
+        restart_button = pygame.Rect(WIDTH//2 - 140, HEIGHT//2 + 20, 130, 60)
+        quit_button = pygame.Rect(WIDTH//2 + 10, HEIGHT//2 + 20, 130, 60)
         mouse_pos = pygame.mouse.get_pos()
         
-        if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
+        # RESTART button
+        restart_hover = restart_button.collidepoint(mouse_pos)
+        restart_bg_color = (80, 180, 60) if restart_hover else (50, 140, 40)
+        restart_border_color = (150, 255, 100) if restart_hover else (100, 200, 80)
+        pygame.draw.rect(screen, restart_bg_color, restart_button)
+        pygame.draw.rect(screen, restart_border_color, restart_button, 5)
+        
+        restart_text = font.render("RESTART", False, (255, 255, 255) if restart_hover else (200, 255, 180))
+        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2,
+                                   restart_button.centery - restart_text.get_height() // 2))
+        
+        # QUIT button
+        quit_hover = quit_button.collidepoint(mouse_pos)
+        quit_bg_color = (180, 80, 60) if quit_hover else (140, 50, 40)
+        quit_border_color = (255, 150, 100) if quit_hover else (200, 100, 80)
+        pygame.draw.rect(screen, quit_bg_color, quit_button)
+        pygame.draw.rect(screen, quit_border_color, quit_button, 5)
+        
+        quit_text = font.render("QUIT", False, (255, 255, 255) if quit_hover else (255, 200, 180))
+        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2,
+                                quit_button.centery - quit_text.get_height() // 2))
+        
+        if restart_hover or quit_hover:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-        
-        pygame.draw.rect(screen, (0, 255, 0), restart_button)
-        pygame.draw.rect(screen, (255, 0, 0), quit_button)
-        
-        restart_text = font.render("Restart", True, (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0))
-        quit_text = font.render("Quit", True, (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0))
-        
-        screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
-        screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
 
         pygame.display.flip()
 
@@ -315,4 +378,3 @@ while running:
 
 if __name__ == '__main__':
     asyncio.run(main())
-
