@@ -12,6 +12,10 @@ class Frog:
         self.size = size
         self.color = (50, 200, 50)
         self.bottom_margin = bottom_margin
+        self.tongue_y_offset = 28  # Pixels to move tongue and warning dots higher (adjust this value)
+        self.tongue_x_offset = 0   # Pixels to move tongue and warning dots horizontally (adjust this value)
+        # Separate offset for the tongue starting Y so warning dots can remain independent
+        self.tongue_start_y_offset = 10  # Smaller -> tongue starts lower; larger -> starts higher
         
         # Position frog at bottom center
         frog_space = pygame.Rect(0, screen_height - bottom_margin, screen_width, bottom_margin)
@@ -39,10 +43,15 @@ class Frog:
         
         # Image
         self.image = None
+        self.image_open = None  # Image with mouth open for tongue attack
         
     def set_image(self, image):
         """Set sprite image for frog."""
         self.image = image
+    
+    def set_open_image(self, image):
+        """Set sprite image for frog with mouth open (used during tongue attack)."""
+        self.image_open = image
         
     def update(self, mosquito_center, game_started, game_over):
         """Update frog AI with realistic hunting behavior."""
@@ -118,7 +127,9 @@ class Frog:
             if self.preparation_timer <= 0:
                 # STRIKE! Predict where mosquito will be
                 predicted_target = self._predict_mosquito_position(mosquito_center)
-                self.tongue.shoot(self.rect.center, predicted_target)
+                # Use separate starting Y offset for the tongue so warning dots stay unchanged
+                tongue_start = (self.rect.centerx, self.rect.centery - self.tongue_start_y_offset)
+                self.tongue.shoot(tongue_start, predicted_target)
                 audio.tongue_attack.play()
                 self.state = "attacking"
                 self.attack_timer = random.randint(30, 60)  # Quick cooldown for multiple shots
@@ -167,19 +178,24 @@ class Frog:
     
     def draw(self, screen):
         """Draw frog and tongue with visual feedback."""
+        # Choose image based on state (open mouth when attacking with tongue)
+        current_image = self.image
+        if self.state == "attacking" and self.image_open:
+            current_image = self.image_open
+        
         # Draw frog image with tension effect
-        if self.image:
+        if current_image:
             # Apply slight scaling when preparing to attack
             if self.body_tension > 0:
                 scale_factor = 1.0 + (self.body_tension * 0.08)
-                scaled_size = (int(self.image.get_width() * scale_factor), 
-                             int(self.image.get_height() * scale_factor))
-                scaled_image = pygame.transform.scale(self.image, scaled_size)
-                offset_x = (scaled_image.get_width() - self.image.get_width()) // 2
-                offset_y = (scaled_image.get_height() - self.image.get_height()) // 2
+                scaled_size = (int(current_image.get_width() * scale_factor), 
+                             int(current_image.get_height() * scale_factor))
+                scaled_image = pygame.transform.scale(current_image, scaled_size)
+                offset_x = (scaled_image.get_width() - current_image.get_width()) // 2
+                offset_y = (scaled_image.get_height() - current_image.get_height()) // 2
                 screen.blit(scaled_image, (self.rect.left - offset_x, self.rect.top - offset_y))
             else:
-                screen.blit(self.image, self.rect.topleft)
+                screen.blit(current_image, self.rect.topleft)
         else:
             pygame.draw.rect(screen, self.color, self.rect)
         
@@ -188,17 +204,18 @@ class Frog:
             glow_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
             glow_alpha = int(min(150, self.eye_glow))
             
-            # Draw glowing eyes
-            eye_color = (255, 200, 0, glow_alpha)  # Yellow glow
-            left_eye_pos = (int(self.rect.width * 0.35), int(self.rect.height * 0.3))
-            right_eye_pos = (int(self.rect.width * 0.65), int(self.rect.height * 0.3))
+            # Draw glowing eyes with offset
+            eye_color = (255, 0, 0, glow_alpha)  # Yellow glow
+            left_eye_pos = (int(self.rect.width * 0.28), int(self.rect.height * 0.3))
+            right_eye_pos = (int(self.rect.width * 0.71), int(self.rect.height * 0.3))
             pygame.draw.circle(glow_surface, eye_color, left_eye_pos, 12)
             pygame.draw.circle(glow_surface, eye_color, right_eye_pos, 12)
             
-            screen.blit(glow_surface, self.rect.topleft)
+            screen.blit(glow_surface, (self.rect.left + self.tongue_x_offset, self.rect.top - self.tongue_y_offset))
         
-        # Update tongue center before drawing
-        self.tongue.frog_center = self.rect.center
+        # Update tongue center before drawing (apply offset for correct retraction point)
+        # Use the separate start offset so retraction lines up with where the tongue was shot from
+        self.tongue.frog_center = (self.rect.centerx + self.tongue_x_offset, self.rect.centery - self.tongue_start_y_offset)
         self.tongue.draw(screen)
     
     def reset(self):

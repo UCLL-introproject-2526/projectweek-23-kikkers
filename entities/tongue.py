@@ -7,8 +7,9 @@ class Tongue:
     """Frog's tongue that extends and retracts with realistic curves and visuals."""
     
     def __init__(self):
-        self.color = (255, 100, 100)
-        self.tip_color = (200, 50, 50)
+        # main tongue color (pink)
+        self.color = (125, 36, 53)
+        self.tip_color = (206, 77, 104)
         self.active = False
         self.length = 0
         self.max_length = 850
@@ -206,29 +207,50 @@ class Tongue:
             
             # Draw main tongue body with gradient effect
             if len(points) > 1:
+                # Draw tongue with a smooth gradient and subtle outline for depth
                 for i in range(len(points) - 1):
-                    # Gradient from base to tip
                     progress = i / (len(points) - 1)
+
+                    # Interpolate color between base and tip colors (linear blend)
                     segment_color = (
-                        int(self.color[0] - progress * 55),
-                        int(self.color[1] - progress * 50),
-                        int(self.color[2] - progress * 50)
+                        int(self.color[0] * (1.0 - progress) + self.tip_color[0] * progress),
+                        int(self.color[1] * (1.0 - progress) + self.tip_color[1] * progress),
+                        int(self.color[2] * (1.0 - progress) + self.tip_color[2] * progress),
                     )
-                    
-                    # Taper width from base to tip
-                    segment_width = int(self.width * (1.0 - progress * 0.3))
-                    
+
+                    # Slightly darker outline color for depth
+                    outline_color = (
+                        max(0, int(segment_color[0] * 0.55)),
+                        max(0, int(segment_color[1] * 0.55)),
+                        max(0, int(segment_color[2] * 0.55)),
+                    )
+
+                    # Taper width from base to tip, minimum 1
+                    segment_width = max(1, int(self.width * (1.0 - progress * 0.85)))
+
+                    # Draw outline (wider, darker) then the main tongue line on top
+                    pygame.draw.line(screen, outline_color, points[i], points[i+1], max(1, segment_width + 2))
                     pygame.draw.line(screen, segment_color, points[i], points[i+1], segment_width)
                 
-                # Draw sticky tip
+                # Draw blended tip with concentric circles for a softer, more organic look
                 tip_pos = points[-1]
-                pygame.draw.circle(screen, self.tip_color, tip_pos, self.width // 2 + 2)
-                pygame.draw.circle(screen, (255, 150, 150), tip_pos, self.width // 3)
-                
-                # Draw mouth connection point
-                mouth_offset_y = 15  # Tongue comes from lower part of frog
+                tip_radius = max(2, self.width // 2 + 2)
+                # draw several concentric circles fading into the tip_color
+                for j in range(4, 0, -1):
+                    tprog = j / 4.0
+                    col = (
+                        int(self.tip_color[0] * tprog + segment_color[0] * (1 - tprog)),
+                        int(self.tip_color[1] * tprog + segment_color[1] * (1 - tprog)),
+                        int(self.tip_color[2] * tprog + segment_color[2] * (1 - tprog)),
+                    )
+                    pygame.draw.circle(screen, col, tip_pos, int(tip_radius * (j / 4.0)))
+
+                # Draw mouth connection as a flattened ellipse for better integration
+                mouth_offset_y = max(2, int(self.width * 0.1))
                 mouth_pos = (int(self.frog_center[0]), int(self.frog_center[1] + mouth_offset_y))
-                pygame.draw.circle(screen, (220, 80, 80), mouth_pos, self.width // 2)
+                mouth_rect = pygame.Rect(0, 0, int(self.width * 0.9), int(self.width * 0.6))
+                mouth_rect.center = mouth_pos
+                pygame.draw.ellipse(screen, outline_color, mouth_rect)
         
         # Draw sticky particles
         for particle in self.sticky_particles[:]:

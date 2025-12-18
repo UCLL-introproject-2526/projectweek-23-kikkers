@@ -12,16 +12,16 @@ def load_images():
     global frog_image, frog_tong_image, mosquito_image, game_background, _human_walk_frames
     
     # Load and scale images
-    frog_image = pygame.image.load('assets/images/froggy.png').convert_alpha()
-    frog_image = pygame.transform.scale(frog_image, (200, 200))
+    frog_image = pygame.image.load('assets/images/frog_closed.png').convert_alpha()
+    frog_image = pygame.transform.scale(frog_image, (200, 180))
 
-    frog_tong_image = pygame.image.load('assets/images/froggy.png').convert_alpha()
-    frog_tong_image = pygame.transform.scale(frog_tong_image, (200, 200))
+    frog_tong_image = pygame.image.load('assets/images/frog_open.png').convert_alpha()
+    frog_tong_image = pygame.transform.scale(frog_tong_image, (200, 180))
 
     mosquito_image = pygame.image.load('assets/images/fly.png').convert_alpha()
     mosquito_image = pygame.transform.scale(mosquito_image, (70, 70))
 
-    game_background = pygame.image.load('assets/images/lillypad.png')
+    game_background = pygame.image.load('assets/images/lillypaddy.png')
 
     # Human image (optional). Filename contains space: 'human head.png'
     try:

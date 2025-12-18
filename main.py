@@ -103,6 +103,7 @@ def reset_game():
     mosquito.set_image(images.mosquito_image)
     frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
     frog.set_image(images.frog_image)
+    frog.set_open_image(images.frog_tong_image)
     humans_group = pygame.sprite.Group()
     return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
 
