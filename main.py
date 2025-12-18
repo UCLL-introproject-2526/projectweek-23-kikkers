@@ -287,8 +287,8 @@ while running:
         game_over_text = font.render("You Win!" if game_won else "Game Over", True, (255, 255, 255))
         screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
         
-        restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 80, 40)
-        quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 80, 40)
+        restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 110, 40)
+        quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 110, 40)
         mouse_pos = pygame.mouse.get_pos()
         
         if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
