@@ -59,14 +59,14 @@ async def main():
 
 
     async def start_screen():
-    button_width = 260
-    button_height = 70
-    start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 60, button_width, button_height)
-    quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 150, button_width, button_height)
+        button_width = 260
+        button_height = 70
+        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 60, button_width, button_height)
+        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 150, button_width, button_height)
 
-    while True:
-        screen.blit(images.game_background, (0, 0))
-        mouse_pos = pygame.mouse.get_pos()
+        while True:
+            screen.blit(images.game_background, (0, 0))
+            mouse_pos = pygame.mouse.get_pos()
 
         # HUGE pixelated title with swamp colors
         title_text = title_font.render("FROGEATO", False, (150, 255, 100))  # Bright swamp green
@@ -125,13 +125,13 @@ async def main():
 
 
     def reset_game():
-    mosquito = Mosquito(400, 100, size=70)
-    mosquito.set_image(images.mosquito_image)
-    mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
-    frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
-    frog.set_image(images.frog_image)
-    frog.set_open_image(images.frog_tong_image)
-    humans_group = pygame.sprite.Group()
+        mosquito = Mosquito(400, 100, size=70)
+        mosquito.set_image(images.mosquito_image)
+        mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
+        frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
+        frog.set_image(images.frog_image)
+        frog.set_open_image(images.frog_tong_image)
+        humans_group = pygame.sprite.Group()
         return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
 
 
@@ -386,8 +386,8 @@ async def main():
         screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2,
                                 quit_button.centery - quit_text.get_height() // 2))
         
-            if restart_hover or quit_hover:
-                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        if restart_hover or quit_hover:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
 
         pygame.display.flip()
 
