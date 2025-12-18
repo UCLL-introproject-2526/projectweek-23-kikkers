@@ -47,8 +47,9 @@ async def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Frogeato")
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont("Arial", 32)
-    big_font = pygame.font.SysFont("Arial", 64)
+    font = pygame.font.Font("Daydream_DEMO.ttf", 32)
+    big_font = pygame.font.Font("Daydream_DEMO.ttf", 64)
+    title_font = pygame.font.Font("Daydream_DEMO.ttf", 100)
 
     # Load images after display is initialized
     import images
@@ -56,32 +57,35 @@ async def main():
 
 
     async def start_screen():
-        button_width = 200
-        button_height = 50
+        button_width = 250
+        button_height = 60
         start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
-        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
+        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 90, button_width, button_height)
 
         while True:
             screen.blit(images.game_background, (0, 0))
             mouse_pos = pygame.mouse.get_pos()
-
-            start_color = (255, 255, 255) if start_button.collidepoint(mouse_pos) else (0, 0, 0)
-            quit_color = (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0)
 
             if start_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             else:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-            title_text = font.render("Frogeato", True, (255, 255, 255))
-            screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2 - 60))
+            # Title with shadow
+            title_shadow = title_font.render("Frogeato", True, (0, 0, 0))
+            screen.blit(title_shadow, (WIDTH // 2 - title_shadow.get_width() // 2 + 2, HEIGHT // 2 - title_shadow.get_height() // 2 - 120 + 2))
+            title_text = title_font.render("Frogeato", True, (0, 255, 0))
+            screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2 - 120))
 
-            pygame.draw.rect(screen, (0, 255, 0), start_button)
-            start_text = font.render("Start", True, start_color)
+            # Draw buttons with border
+            pygame.draw.rect(screen, (0, 0, 0), start_button)  # border
+            pygame.draw.rect(screen, (0, 150, 0), start_button.inflate(-4, -4))  # inner
+            start_text = font.render("Start", True, (255, 255, 255))
             screen.blit(start_text, (start_button.centerx - start_text.get_width() // 2, start_button.centery - start_text.get_height() // 2))
 
-            pygame.draw.rect(screen, (255, 0, 0), quit_button)
-            quit_text = font.render("Quit", True, quit_color)
+            pygame.draw.rect(screen, (0, 0, 0), quit_button)  # border
+            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))  # inner
+            quit_text = font.render("Quit", True, (255, 255, 255))
             screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
 
             pygame.display.flip()
@@ -250,21 +254,25 @@ async def main():
             pause_text = font.render("Paused", True, (255, 255, 255))
             screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 100))
             
-            restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 110, 40)
-            resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 110, 40)
-            quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 110, 40)
+            restart_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 - 60, 120, 50)
+            resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 120, 50)
+            quit_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 + 60, 120, 50)
             mouse_pos = pygame.mouse.get_pos()
             
             if restart_button.collidepoint(mouse_pos) or resume_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             
-            pygame.draw.rect(screen, (0, 255, 0), restart_button)
-            pygame.draw.rect(screen, (0, 255, 0), resume_button)
-            pygame.draw.rect(screen, (255, 0, 0), quit_button)
+            # Draw buttons with borders
+            pygame.draw.rect(screen, (0, 0, 0), restart_button)
+            pygame.draw.rect(screen, (0, 100, 0), restart_button.inflate(-4, -4))  # dark green
+            pygame.draw.rect(screen, (0, 0, 0), resume_button)
+            pygame.draw.rect(screen, (0, 150, 0), resume_button.inflate(-4, -4))  # medium green
+            pygame.draw.rect(screen, (0, 0, 0), quit_button)
+            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))  # red
             
-            restart_text = font.render("Restart", True, (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0))
-            resume_text = font.render("Resume", True, (255, 255, 255) if resume_button.collidepoint(mouse_pos) else (0, 0, 0))
-            quit_text = font.render("Quit", True, (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0))
+            restart_text = font.render("Restart", True, (255, 255, 255))
+            resume_text = font.render("Resume", True, (255, 255, 255))
+            quit_text = font.render("Quit", True, (255, 255, 255))
             
             screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
             screen.blit(resume_text, (resume_button.centerx - resume_text.get_width() // 2, resume_button.centery - resume_text.get_height() // 2))
@@ -291,18 +299,21 @@ async def main():
             game_over_text = font.render("You Win!" if game_won else "Game Over", True, (255, 255, 255))
             screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
             
-            restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 110, 40)
-            quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 110, 40)
+            restart_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 - 30, 120, 50)
+            quit_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 + 30, 120, 50)
             mouse_pos = pygame.mouse.get_pos()
             
             if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             
-            pygame.draw.rect(screen, (0, 255, 0), restart_button)
-            pygame.draw.rect(screen, (255, 0, 0), quit_button)
+            # Draw buttons with borders
+            pygame.draw.rect(screen, (0, 0, 0), restart_button)
+            pygame.draw.rect(screen, (0, 150, 0), restart_button.inflate(-4, -4))
+            pygame.draw.rect(screen, (0, 0, 0), quit_button)
+            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))
             
-            restart_text = font.render("Restart", True, (255, 255, 255) if restart_button.collidepoint(mouse_pos) else (0, 0, 0))
-            quit_text = font.render("Quit", True, (255, 255, 255) if quit_button.collidepoint(mouse_pos) else (0, 0, 0))
+            restart_text = font.render("Restart", True, (255, 255, 255))
+            quit_text = font.render("Quit", True, (255, 255, 255))
             
             screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
             screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
