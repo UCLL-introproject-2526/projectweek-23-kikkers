@@ -3,6 +3,7 @@ import os
 import pygame
 import sys
 import random
+import audio
 from entities.fly import Mosquito
 from entities.frog import Frog
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -174,8 +175,6 @@ while running:
         if pause_countdown_elapsed >= 3:
             paused = False
             pause_countdown_start = 0
-
-    import audio
     
     # Play frog sound every 5 seconds during gameplay
     current_time = pygame.time.get_ticks()
@@ -247,9 +246,9 @@ while running:
         pause_text = font.render("Paused", True, (255, 255, 255))
         screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 100))
         
-        restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 80, 40)
-        resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 80, 40)
-        quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 80, 40)
+        restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 110, 40)
+        resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 110, 40)
+        quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 110, 40)
         mouse_pos = pygame.mouse.get_pos()
         
         if restart_button.collidepoint(mouse_pos) or resume_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
