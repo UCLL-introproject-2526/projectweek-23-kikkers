@@ -4,7 +4,7 @@ import pygame
 pygame.mixer.init()
 
 # Load sounds
-background_music = "assets/sounds/background_music.mp3"
+background_music = "assets/sounds/background_music_cut.mp3"
 musquito_sound = pygame.mixer.Sound("assets/sounds/musquito_sound.mp3")
 frog_sound = pygame.mixer.Sound("assets/sounds/frog_sound.mp3")
 tongue_attack = pygame.mixer.Sound("assets/sounds/tongue_stretching.mp3")
