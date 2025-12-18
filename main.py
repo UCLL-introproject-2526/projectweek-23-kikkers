@@ -47,9 +47,21 @@ async def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Frogeato")
     clock = pygame.time.Clock()
-    font = pygame.font.Font("Daydream_DEMO.ttf", 32)
-    big_font = pygame.font.Font("Daydream_DEMO.ttf", 64)
-    title_font = pygame.font.Font("Daydream_DEMO.ttf", 100)
+    
+    # Load the legendary Silkscreen font
+    try:
+        font_small = pygame.font.Font("Silkscreen-Regular.ttf", 20)
+        font = pygame.font.Font("Silkscreen-Regular.ttf", 32)
+        big_font = pygame.font.Font("Silkscreen-Regular.ttf", 64)
+        title_font = pygame.font.Font("Silkscreen-Regular.ttf", 100)
+        huge_font = pygame.font.Font("Silkscreen-Regular.ttf", 120)
+    except:
+        # Fallback just in case
+        font_small = pygame.font.SysFont("Arial", 20, bold=True)
+        font = pygame.font.SysFont("Arial", 32, bold=True)
+        big_font = pygame.font.SysFont("Arial", 64, bold=True)
+        title_font = pygame.font.SysFont("Arial", 100, bold=True)
+        huge_font = pygame.font.SysFont("Arial", 120, bold=True)
 
     # Load images after display is initialized
     import images
@@ -57,38 +69,236 @@ async def main():
 
 
     async def start_screen():
-        button_width = 250
-        button_height = 60
-        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 20, button_width, button_height)
-        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 90, button_width, button_height)
+        import math
+        
+        # Swamp aesthetic particles
+        fireflies = []
+        water_ripples = []
+        lily_pads = []
+        mist_particles = []
+        
+        # Initialize fireflies (glowing swamp lights)
+        for _ in range(25):
+            fireflies.append({
+                'x': random.randint(0, WIDTH),
+                'y': random.randint(0, HEIGHT - 200),
+                'size': random.randint(2, 5),
+                'speed': random.uniform(0.3, 1.0),
+                'glow': random.randint(0, 360),
+                'brightness': random.uniform(0.5, 1.0),
+                'dx': random.uniform(-0.5, 0.5),
+                'dy': random.uniform(-0.8, 0.2)
+            })
+        
+        # Initialize lily pads
+        for _ in range(8):
+            lily_pads.append({
+                'x': random.randint(50, WIDTH - 50),
+                'y': random.randint(HEIGHT - 250, HEIGHT - 100),
+                'size': random.randint(40, 70),
+                'rotation': random.uniform(0, 360),
+                'bob': random.uniform(0, math.pi * 2)
+            })
+        
+        # Initialize mist
+        for _ in range(15):
+            mist_particles.append({
+                'x': random.randint(-100, WIDTH),
+                'y': random.randint(HEIGHT // 2, HEIGHT),
+                'size': random.randint(60, 150),
+                'speed': random.uniform(0.1, 0.4),
+                'alpha': random.randint(10, 40)
+            })
+        
+        button_width = 280
+        button_height = 70
+        button_spacing = 20
+        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
+        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80 + button_height + button_spacing, button_width, button_height)
+        
+        time_offset = 0
+        ripple_timer = 0
 
         while True:
+            time_offset += 0.02
+            ripple_timer += 1
+            
+            # Draw base background
             screen.blit(images.game_background, (0, 0))
+            
+            # Draw atmospheric gradient overlay (swamp fog)
+            gradient_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            for i in range(HEIGHT):
+                alpha = int(30 * (i / HEIGHT))
+                color = (15, 35, 25, alpha)  # Dark greenish overlay
+                pygame.draw.line(gradient_surf, color, (0, i), (WIDTH, i))
+            screen.blit(gradient_surf, (0, 0))
+            
+            # Draw mist particles
+            for mist in mist_particles:
+                mist['x'] += mist['speed']
+                if mist['x'] > WIDTH + 100:
+                    mist['x'] = -100
+                    mist['y'] = random.randint(HEIGHT // 2, HEIGHT)
+                
+                mist_surf = pygame.Surface((mist['size'], mist['size']), pygame.SRCALPHA)
+                pygame.draw.circle(mist_surf, (200, 220, 200, mist['alpha']), 
+                                 (mist['size'] // 2, mist['size'] // 2), mist['size'] // 2)
+                screen.blit(mist_surf, (int(mist['x']), int(mist['y'])))
+            
+            # Draw lily pads with bobbing animation
+            for pad in lily_pads:
+                pad['bob'] += 0.02
+                bob_offset = math.sin(pad['bob']) * 3
+                
+                lily_surf = pygame.Surface((pad['size'], pad['size']), pygame.SRCALPHA)
+                # Outer darker green
+                pygame.draw.ellipse(lily_surf, (40, 80, 40), lily_surf.get_rect())
+                # Inner lighter green
+                inner_rect = pygame.Rect(5, 5, pad['size'] - 10, pad['size'] - 10)
+                pygame.draw.ellipse(lily_surf, (60, 120, 60), inner_rect)
+                # Add a notch (lily pad characteristic)
+                pygame.draw.line(lily_surf, (40, 80, 40), 
+                               (pad['size'] // 2, 0), 
+                               (pad['size'] // 2, pad['size'] // 4), 4)
+                
+                screen.blit(lily_surf, (int(pad['x']), int(pad['y'] + bob_offset)))
+            
+            # Spawn water ripples occasionally
+            if ripple_timer > 60 and random.random() < 0.05:
+                water_ripples.append({
+                    'x': random.randint(100, WIDTH - 100),
+                    'y': random.randint(HEIGHT - 250, HEIGHT - 100),
+                    'radius': 0,
+                    'max_radius': random.randint(40, 80),
+                    'alpha': 255
+                })
+                ripple_timer = 0
+            
+            # Draw water ripples
+            for ripple in water_ripples[:]:
+                ripple['radius'] += 1.5
+                ripple['alpha'] = max(0, ripple['alpha'] - 5)
+                
+                if ripple['alpha'] <= 0 or ripple['radius'] > ripple['max_radius']:
+                    water_ripples.remove(ripple)
+                else:
+                    ripple_surf = pygame.Surface((int(ripple['radius'] * 2 + 10), int(ripple['radius'] * 2 + 10)), pygame.SRCALPHA)
+                    pygame.draw.circle(ripple_surf, (100, 180, 150, ripple['alpha']), 
+                                     (int(ripple['radius'] + 5), int(ripple['radius'] + 5)), 
+                                     int(ripple['radius']), 2)
+                    screen.blit(ripple_surf, (int(ripple['x'] - ripple['radius']), int(ripple['y'] - ripple['radius'])))
+            
+            # Draw fireflies with glow effect
+            for fly in fireflies:
+                fly['x'] += fly['dx']
+                fly['y'] += fly['dy']
+                fly['glow'] = (fly['glow'] + 3) % 360
+                
+                # Wrap around screen
+                if fly['x'] < 0: fly['x'] = WIDTH
+                if fly['x'] > WIDTH: fly['x'] = 0
+                if fly['y'] < 0: fly['y'] = HEIGHT - 200
+                if fly['y'] > HEIGHT - 200: fly['y'] = 0
+                
+                # Pulsing glow effect
+                pulse = abs(math.sin(math.radians(fly['glow']))) * fly['brightness']
+                glow_size = int(fly['size'] * 3 * pulse)
+                
+                if glow_size > 0:
+                    glow_surf = pygame.Surface((glow_size * 2, glow_size * 2), pygame.SRCALPHA)
+                    for i in range(glow_size, 0, -2):
+                        alpha = int(100 * (i / glow_size) * pulse)
+                        pygame.draw.circle(glow_surf, (255, 255, 150, alpha), 
+                                         (glow_size, glow_size), i)
+                    screen.blit(glow_surf, (int(fly['x'] - glow_size), int(fly['y'] - glow_size)))
+                
+                # Core light
+                core_brightness = int(200 + 55 * pulse)
+                pygame.draw.circle(screen, (core_brightness, core_brightness, 100), 
+                                 (int(fly['x']), int(fly['y'])), fly['size'])
+            
             mouse_pos = pygame.mouse.get_pos()
 
+            # Animated title with swamp glow
+            title_y = HEIGHT // 2 - 180
+            title_float = math.sin(time_offset * 2) * 8
+            
+            # Title glow layers
+            for offset in [8, 6, 4, 2]:
+                glow_alpha = int(40 * (offset / 8))
+                glow_color = (50, 200, 100, glow_alpha)
+                glow_surf = pygame.Surface((WIDTH, 200), pygame.SRCALPHA)
+                glow_title = title_font.render("Frogeato", True, glow_color)
+                glow_surf.blit(glow_title, (WIDTH // 2 - glow_title.get_width() // 2 + offset, 
+                                           title_y + offset + title_float - 50))
+                screen.blit(glow_surf, (0, 50))
+            
+            # Main title with shadow
+            title_shadow = title_font.render("Frogeato", True, (10, 30, 20))
+            screen.blit(title_shadow, (WIDTH // 2 - title_shadow.get_width() // 2 + 4, 
+                                      title_y + title_float + 4))
+            title_text = title_font.render("Frogeato", True, (100, 255, 150))
+            screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 
+                                    title_y + title_float))
+            
+            # Subtitle
+            subtitle = font.render("The Swamp Chronicles", True, (150, 200, 160))
+            screen.blit(subtitle, (WIDTH // 2 - subtitle.get_width() // 2, title_y + 110))
+            
+            # Draw stylish swamp-themed buttons
+            for button, text, color_base in [(start_button, "Start Adventure", (60, 150, 80)), 
+                                              (quit_button, "Leave Swamp", (150, 80, 60))]:
+                is_hover = button.collidepoint(mouse_pos)
+                
+                if is_hover:
+                    # Hover glow effect
+                    glow_rect = button.inflate(20, 20)
+                    glow_surf = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
+                    pulse_glow = abs(math.sin(time_offset * 3)) * 30
+                    for i in range(10, 0, -1):
+                        alpha = int(pulse_glow * (i / 10))
+                        rect = pygame.Rect(10 - i, 10 - i, glow_rect.width - 2 * (10 - i), 
+                                         glow_rect.height - 2 * (10 - i))
+                        pygame.draw.rect(glow_surf, (*color_base, alpha), rect, border_radius=15)
+                    screen.blit(glow_surf, (glow_rect.x, glow_rect.y))
+                
+                # Button base (darker)
+                pygame.draw.rect(screen, (20, 35, 25), button, border_radius=12)
+                
+                # Button fill with gradient effect
+                button_inner = button.inflate(-6, -6)
+                if is_hover:
+                    brightness_mult = 1.3
+                else:
+                    brightness_mult = 1.0
+                
+                inner_color = tuple(int(c * brightness_mult) for c in color_base)
+                pygame.draw.rect(screen, inner_color, button_inner, border_radius=10)
+                
+                # Button border
+                border_color = (150, 200, 150) if is_hover else (80, 120, 90)
+                pygame.draw.rect(screen, border_color, button, 3, border_radius=12)
+                
+                # Button text with glow
+                if is_hover:
+                    text_glow = font.render(text, True, (200, 255, 200))
+                    for dx, dy in [(-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                        screen.blit(text_glow, (button.centerx - text_glow.get_width() // 2 + dx, 
+                                               button.centery - text_glow.get_height() // 2 + dy))
+                
+                button_text = font.render(text, True, (255, 255, 255))
+                screen.blit(button_text, (button.centerx - button_text.get_width() // 2, 
+                                         button.centery - button_text.get_height() // 2))
+            
+            # Set cursor
             if start_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             else:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-            # Title with shadow
-            title_shadow = title_font.render("Frogeato", True, (0, 0, 0))
-            screen.blit(title_shadow, (WIDTH // 2 - title_shadow.get_width() // 2 + 2, HEIGHT // 2 - title_shadow.get_height() // 2 - 120 + 2))
-            title_text = title_font.render("Frogeato", True, (0, 255, 0))
-            screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2 - 120))
-
-            # Draw buttons with border
-            pygame.draw.rect(screen, (0, 0, 0), start_button)  # border
-            pygame.draw.rect(screen, (0, 150, 0), start_button.inflate(-4, -4))  # inner
-            start_text = font.render("Start", True, (255, 255, 255))
-            screen.blit(start_text, (start_button.centerx - start_text.get_width() // 2, start_button.centery - start_text.get_height() // 2))
-
-            pygame.draw.rect(screen, (0, 0, 0), quit_button)  # border
-            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))  # inner
-            quit_text = font.render("Quit", True, (255, 255, 255))
-            screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
-
             pygame.display.flip()
+            await asyncio.sleep(1/FPS)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -96,6 +306,16 @@ async def main():
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if start_button.collidepoint(event.pos):
+                        # Ripple effect on click
+                        for _ in range(5):
+                            water_ripples.append({
+                                'x': event.pos[0] + random.randint(-20, 20),
+                                'y': event.pos[1] + random.randint(-20, 20),
+                                'radius': 0,
+                                'max_radius': random.randint(60, 100),
+                                'alpha': 255
+                            })
+                        await asyncio.sleep(0.3)
                         return
                     if quit_button.collidepoint(event.pos):
                         pygame.quit()
@@ -242,41 +462,63 @@ async def main():
         frog.draw(screen)
 
         humans_group.draw(screen)
-        score_text = font.render(f"Score: {score}", True, (255, 100, 100))
-        screen.blit(score_text, (10, 10))
+        
+        # Clean, simple score display with dark swamp feel
+        import math
+        
+        # Dark panel background
+        panel = pygame.Surface((280, 110), pygame.SRCALPHA)
+        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 280, 110), border_radius=12)
+        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 280, 110), 3, border_radius=12)
+        screen.blit(panel, (15, 15))
+        
+        # Score text - clean and readable
+        score_label = font_small.render("SCORE", True, (140, 180, 150))
+        screen.blit(score_label, (30, 30))
+        
+        score_str = str(score)
+        score_text = big_font.render(score_str, True, (180, 220, 180))
+        screen.blit(score_text, (30, 55))
+        
+        # Goal indicator
+        goal_text = font_small.render(f"Goal: {win_score}", True, (120, 160, 130))
+        screen.blit(goal_text, (200, 95))
 
         if paused:
-            overlay = pygame.Surface((WIDTH, HEIGHT))
-            overlay.set_alpha(128)
-            overlay.fill((0, 0, 0))
+            # Simple dark overlay
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            overlay.fill((10, 20, 15, 180))
             screen.blit(overlay, (0, 0))
             
-            pause_text = font.render("Paused", True, (255, 255, 255))
-            screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 100))
+            # Clean pause title
+            pause_text = huge_font.render("PAUSED", True, (140, 200, 160))
+            screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - 180))
             
-            restart_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 - 60, 120, 50)
-            resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 120, 50)
-            quit_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 + 60, 120, 50)
+            # Simple, clean buttons
+            restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 - 40, 200, 50)
+            resume_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 20, 200, 50)
+            quit_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 80, 200, 50)
             mouse_pos = pygame.mouse.get_pos()
             
             if restart_button.collidepoint(mouse_pos) or resume_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             
-            # Draw buttons with borders
-            pygame.draw.rect(screen, (0, 0, 0), restart_button)
-            pygame.draw.rect(screen, (0, 100, 0), restart_button.inflate(-4, -4))  # dark green
-            pygame.draw.rect(screen, (0, 0, 0), resume_button)
-            pygame.draw.rect(screen, (0, 150, 0), resume_button.inflate(-4, -4))  # medium green
-            pygame.draw.rect(screen, (0, 0, 0), quit_button)
-            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))  # red
-            
-            restart_text = font.render("Restart", True, (255, 255, 255))
-            resume_text = font.render("Resume", True, (255, 255, 255))
-            quit_text = font.render("Quit", True, (255, 255, 255))
-            
-            screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
-            screen.blit(resume_text, (resume_button.centerx - resume_text.get_width() // 2, resume_button.centery - resume_text.get_height() // 2))
-            screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
+            # Draw clean buttons
+            for button, text, base_color in [(restart_button, "RESTART", (60, 120, 80)),
+                                               (resume_button, "RESUME", (70, 140, 90)),
+                                               (quit_button, "QUIT", (120, 60, 50))]:
+                is_hover = button.collidepoint(mouse_pos)
+                
+                # Simple button style
+                bg_color = base_color if not is_hover else tuple(min(255, int(c * 1.3)) for c in base_color)
+                pygame.draw.rect(screen, (15, 25, 20), button, border_radius=8)
+                pygame.draw.rect(screen, bg_color, button.inflate(-4, -4), border_radius=6)
+                pygame.draw.rect(screen, (100, 150, 120) if is_hover else (60, 100, 80), button, 2, border_radius=8)
+                
+                # Text
+                button_text = font.render(text, True, (240, 250, 240))
+                screen.blit(button_text, (button.centerx - button_text.get_width() // 2,
+                                         button.centery - button_text.get_height() // 2))
 
         if stun_timer > 0 and game_started and not game_over:
             msg = font.render("sucking blood!", True, (255, 100, 100))
@@ -291,32 +533,105 @@ async def main():
             screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - 150))
 
         if game_over:
-            overlay = pygame.Surface((WIDTH, HEIGHT))
-            overlay.set_alpha(128)
-            overlay.fill((0, 0, 0))
+            # LEGENDARY SWAMP GAME OVER SCREEN
+            import math
+            time_val = pygame.time.get_ticks() * 0.001
+            
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            # Dark murky water overlay with ripples
+            for i in range(0, HEIGHT, 3):
+                ripple = math.sin(i * 0.03 + time_val * 1.5) * 8
+                alpha = 160 + int(ripple)
+                pygame.draw.rect(overlay, (10, 25, 20, alpha), (0, i, WIDTH, 3))
             screen.blit(overlay, (0, 0))
             
-            game_over_text = font.render("You Win!" if game_won else "Game Over", True, (255, 255, 255))
-            screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 100))
+            # Falling swamp leaves/debris
+            for i in range(30):
+                leaf_x = (pygame.time.get_ticks() * 0.03 + i * 33) % WIDTH
+                leaf_y = (pygame.time.get_ticks() * 0.02 + i * 27) % HEIGHT
+                leaf_rot = (time_val + i) * 50
+                leaf_size = 12 + int(math.sin(time_val + i) * 4)
+                
+                leaf_surf = pygame.Surface((leaf_size * 2, leaf_size * 2), pygame.SRCALPHA)
+                pygame.draw.ellipse(leaf_surf, (60, 100, 50, 180), (0, 0, leaf_size * 2, leaf_size))
+                screen.blit(leaf_surf, (int(leaf_x), int(leaf_y)))
             
-            restart_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 - 30, 120, 50)
-            quit_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2 + 30, 120, 50)
+            # Main result panel
+            panel_width = 700
+            panel_height = 450
+            panel_x = WIDTH // 2 - panel_width // 2
+            panel_y = HEIGHT // 2 - panel_height // 2
+            
+            panel_surf = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+            
+            # Lily pads around the panel
+            for i in range(8):
+                angle = (i / 8) * 3.14159 * 2 + time_val * 0.5
+                pad_x = int(panel_width // 2 + math.cos(angle) * (panel_width // 2 + 40))
+                pad_y = int(panel_height // 2 + math.sin(angle) * (panel_height // 2 + 40))
+                pad_size = 50 + int(math.sin(time_val * 2 + i) * 8)
+                
+                # Shadow
+                pygame.draw.ellipse(panel_surf, (10, 20, 15, 150),
+                                  (pad_x - pad_size//2 + 3, pad_y - pad_size//2 + 3, pad_size, pad_size))
+                # Lily pad
+                pygame.draw.ellipse(panel_surf, (50, 110, 60, 230),
+                                  (pad_x - pad_size//2, pad_y - pad_size//2, pad_size, pad_size))
+                # Highlight
+                pygame.draw.ellipse(panel_surf, (80, 150, 90, 180),
+                                  (pad_x - pad_size//2 + 5, pad_y - pad_size//2 + 5, pad_size - 15, pad_size - 15))
+            
+            # Dark swamp panel background
+            pygame.draw.rect(panel_surf, (15, 30, 25, 240), (50, 50, panel_width - 100, panel_height - 100), border_radius=30)
+            
+            # Glowing border animation
+            border_pulse = abs(math.sin(time_val * 3)) * 30
+            border_color = (80 + int(border_pulse), 180 + int(border_pulse), 100 + int(border_pulse))
+            
+            # Multiple border layers for depth
+            for thickness in [8, 5, 2]:
+                alpha = int(255 * (thickness / 8))
+                pygame.draw.rect(panel_surf, (*border_color, alpha), 
+                               (50, 50, panel_width - 100, panel_height - 100), thickness, border_radius=30)
+            
+            # Simple dark overlay
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            overlay.fill((10, 20, 15, 200))
+            screen.blit(overlay, (0, 0))
+            
+            # Title
+            title_text = "VICTORY!" if game_won else "GAME OVER"
+            title_color = (160, 220, 140) if game_won else (220, 140, 140)
+            title = huge_font.render(title_text, True, title_color)
+            screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 140))
+            
+            # Score
+            score_label = font.render("Final Score", True, (140, 180, 150))
+            screen.blit(score_label, (WIDTH // 2 - score_label.get_width() // 2, HEIGHT // 2 - 40))
+            
+            score_text = big_font.render(str(score), True, (180, 220, 180))
+            screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2))
+            
+            # Simple buttons
+            restart_button = pygame.Rect(WIDTH // 2 - 180, HEIGHT // 2 + 80, 150, 50)
+            quit_button = pygame.Rect(WIDTH // 2 + 30, HEIGHT // 2 + 80, 150, 50)
             mouse_pos = pygame.mouse.get_pos()
             
             if restart_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             
-            # Draw buttons with borders
-            pygame.draw.rect(screen, (0, 0, 0), restart_button)
-            pygame.draw.rect(screen, (0, 150, 0), restart_button.inflate(-4, -4))
-            pygame.draw.rect(screen, (0, 0, 0), quit_button)
-            pygame.draw.rect(screen, (150, 0, 0), quit_button.inflate(-4, -4))
-            
-            restart_text = font.render("Restart", True, (255, 255, 255))
-            quit_text = font.render("Quit", True, (255, 255, 255))
-            
-            screen.blit(restart_text, (restart_button.centerx - restart_text.get_width() // 2, restart_button.centery - restart_text.get_height() // 2))
-            screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2, quit_button.centery - quit_text.get_height() // 2))
+            for button, text, base_color in [(restart_button, "RESTART", (60, 120, 80)),
+                                              (quit_button, "QUIT", (120, 60, 50))]:
+                is_hover = button.collidepoint(mouse_pos)
+                
+                bg_color = base_color if not is_hover else tuple(min(255, int(c * 1.3)) for c in base_color)
+                pygame.draw.rect(screen, (15, 25, 20), button, border_radius=8)
+                pygame.draw.rect(screen, bg_color, button.inflate(-4, -4), border_radius=6)
+                pygame.draw.rect(screen, (100, 150, 120) if is_hover else (60, 100, 80), button, 2, border_radius=8)
+                
+                button_text = font.render(text, True, (240, 250, 240))
+                screen.blit(button_text, (button.centerx - button_text.get_width() // 2,
+                                         button.centery - button_text.get_height() // 2))
 
         pygame.display.flip()
 
