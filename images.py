@@ -4,12 +4,14 @@ import pygame
 frog_image = None
 frog_tong_image = None
 mosquito_image = None
+mosquito_wingup = None
+mosquito_wingdown = None
 game_background = None
 _human_walk_frames = []
 
 def load_images():
     """Load all images after pygame display is initialized."""
-    global frog_image, frog_tong_image, mosquito_image, game_background, _human_walk_frames
+    global frog_image, frog_tong_image, mosquito_image, mosquito_wingup, mosquito_wingdown, game_background, _human_walk_frames
     
     # Load and scale images
     frog_image = pygame.image.load('assets/images/frog_closed.png').convert_alpha()
@@ -18,8 +20,14 @@ def load_images():
     frog_tong_image = pygame.image.load('assets/images/frog_open.png').convert_alpha()
     frog_tong_image = pygame.transform.scale(frog_tong_image, (200, 180))
 
-    mosquito_image = pygame.image.load('assets/images/fly.png').convert_alpha()
+    mosquito_image = pygame.image.load('assets/images/mosquito_wingup1.png').convert_alpha()
     mosquito_image = pygame.transform.scale(mosquito_image, (70, 70))
+
+    mosquito_wingup = pygame.image.load('assets/images/mosquito_wingup1.png').convert_alpha()
+    mosquito_wingup = pygame.transform.scale(mosquito_wingup, (70, 70))
+
+    mosquito_wingdown = pygame.image.load('assets/images/mosquito_wingdown1.png').convert_alpha()
+    mosquito_wingdown = pygame.transform.scale(mosquito_wingdown, (70, 70))
 
     game_background = pygame.image.load('assets/images/lillypaddy.png')
 

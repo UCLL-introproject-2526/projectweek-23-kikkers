@@ -101,6 +101,7 @@ def start_screen():
 def reset_game():
     mosquito = Mosquito(400, 100, size=70)
     mosquito.set_image(images.mosquito_image)
+    mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
     frog = Frog(WIDTH, HEIGHT, size=200, bottom_margin=200)
     frog.set_image(images.frog_image)
     frog.set_open_image(images.frog_tong_image)

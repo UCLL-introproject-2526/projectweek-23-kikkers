@@ -55,19 +55,9 @@ class Human(pygame.sprite.Sprite):
         if self.touched:
             elapsed = pygame.time.get_ticks() - (self.touched_start or 0)
             if elapsed >= 500:
-                # restore normal animation frame
-                self.touched = False
-                self.touched_start = None
-                self._touched_image = None
-                # after the dying animation is over, make the human un-hittable
-                self.can_be_hit = False
-                try:
-                    topleft = self.rect.topleft
-                    self.image = images.get_current_human_frame()
-                    self.rect = self.image.get_rect()
-                    self.rect.topleft = topleft
-                except Exception:
-                    pass
+                # Dying animation complete, remove the human
+                self.kill()
+                return
 
         # Update animation frame while preserving position if not touched
         if not self.touched:

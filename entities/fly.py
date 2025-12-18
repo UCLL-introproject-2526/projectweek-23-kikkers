@@ -11,6 +11,8 @@ class Mosquito:
         self.color = (200, 50, 50)
         self.rect = pygame.Rect(x, y, size, size)
         self.image = None
+        self.wingup_image = None
+        self.wingdown_image = None
         
         # Physics-based movement
         self.vx = 0  # Velocity X
@@ -24,9 +26,20 @@ class Mosquito:
         self.wobble_offset_x = 0
         self.wobble_offset_y = 0
         
+        # Wing animation (alternates every 100ms)
+        self.wing_timer = 0
+        
+        # Direction facing (for sprite flipping)
+        self.facing_right = True
+        
     def set_image(self, image):
         """Set sprite image for mosquito."""
         self.image = image
+    
+    def set_wing_images(self, wingup, wingdown):
+        """Set wing animation images."""
+        self.wingup_image = wingup
+        self.wingdown_image = wingdown
         
     def handle_input(self, keys):
         """Handle WASD movement with realistic physics."""
@@ -68,10 +81,19 @@ class Mosquito:
         if abs(self.vy) < 0.1:
             self.vy = 0
         
+        # Update direction facing based on velocity
+        if self.vx > 0.1:
+            self.facing_right = True
+        elif self.vx < -0.1:
+            self.facing_right = False
+        
         # Update wobble for realistic flying motion
         self.wobble_timer += 0.15
         self.wobble_offset_x = math.sin(self.wobble_timer) * 0.5
         self.wobble_offset_y = math.cos(self.wobble_timer * 1.3) * 0.3
+        
+        # Update wing animation (alternate every 100ms)
+        self.wing_timer += 1
         
         # Apply velocity to position
         self.rect.x += self.vx + self.wobble_offset_x
@@ -82,9 +104,21 @@ class Mosquito:
         self.rect.clamp_ip(play_area)
     
     def draw(self, screen):
-        """Draw mosquito to screen."""
-        if self.image:
-            screen.blit(self.image, self.rect.topleft)
+        """Draw mosquito to screen with wing animation and directional facing."""
+        # Choose wing frame based on timer (alternate every 100ms = ~6 frames at 60fps)
+        if self.wingup_image and self.wingdown_image:
+            wing_frame = (self.wing_timer // 6) % 2
+            current_image = self.wingup_image if wing_frame == 0 else self.wingdown_image
+        else:
+            current_image = self.image
+        
+        if current_image:
+            # Flip image if facing right (image is oriented left by default)
+            if self.facing_right:
+                flipped_image = pygame.transform.flip(current_image, True, False)
+                screen.blit(flipped_image, self.rect.topleft)
+            else:
+                screen.blit(current_image, self.rect.topleft)
         else:
             pygame.draw.rect(screen, self.color, self.rect)
     
