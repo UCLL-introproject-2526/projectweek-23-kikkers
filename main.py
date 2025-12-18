@@ -6,6 +6,7 @@ import random
 import audio
 from entities.fly import Mosquito
 from entities.frog import Frog
+import asyncio
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 #poopie
 # Provides a simple alternating frame provider for human sprites.
@@ -31,34 +32,33 @@ def get_current_human_frame():
     return _human_frames[idx]
 
 
-if __name__ == '__main__':
+async def main():
     # Minimal test when running `python main.py` directly
     pygame.init()
     # create a tiny surface and blit current frame to verify
     s = pygame.display.set_mode((1, 1))
     print('Current human frame ready:', bool(get_current_human_frame()))
 
+    WIDTH, HEIGHT = 1024, 768
+    FPS = 60
 
-WIDTH, HEIGHT = 1024, 768
-FPS = 60
+    pygame.init()
+    pygame.mixer.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Frogeato")
+    clock = pygame.time.Clock()
+    # Silkscreen retro pixel font for authentic arcade feel
+    font = pygame.font.Font("Silkscreen-Regular.ttf", 20)
+    big_font = pygame.font.Font("Silkscreen-Regular.ttf", 40)
+    score_font = pygame.font.Font("Silkscreen-Regular.ttf", 28)
+    title_font = pygame.font.Font("Silkscreen-Regular.ttf", 72)  # HUGE title font
 
-pygame.init()
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Frogeato")
-clock = pygame.time.Clock()
-# Silkscreen retro pixel font for authentic arcade feel
-font = pygame.font.Font("Silkscreen-Regular.ttf", 20)
-big_font = pygame.font.Font("Silkscreen-Regular.ttf", 40)
-score_font = pygame.font.Font("Silkscreen-Regular.ttf", 28)
-title_font = pygame.font.Font("Silkscreen-Regular.ttf", 72)  # HUGE title font
-
-# Load images after display is initialized
-import images
-images.load_images()
+    # Load images after display is initialized
+    import images
+    images.load_images()
 
 
-def start_screen():
+    async def start_screen():
     button_width = 260
     button_height = 70
     start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 60, button_width, button_height)
@@ -121,8 +121,10 @@ def start_screen():
                     pygame.quit()
                     sys.exit()
 
+        await asyncio.sleep(0)
 
-def reset_game():
+
+    def reset_game():
     mosquito = Mosquito(400, 100, size=70)
     mosquito.set_image(images.mosquito_image)
     mosquito.set_wing_images(images.mosquito_wingup, images.mosquito_wingdown)
@@ -130,25 +132,25 @@ def reset_game():
     frog.set_image(images.frog_image)
     frog.set_open_image(images.frog_tong_image)
     humans_group = pygame.sprite.Group()
-    return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
+        return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
 
 
-start_screen()
+    await start_screen()
 
-# Game state
-mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
-countdown_start_time = pygame.time.get_ticks()
-countdown_played = False
-bottom_margin = 200
-stun_duration = 500
-human_spawn_interval = 5000
-win_score = 100
-# Points awarded per human hit. Default: 10% of win_score (so 10 when win_score=100)
-points_per_human = max(1, win_score // 10)
+    # Game state
+    mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+    countdown_start_time = pygame.time.get_ticks()
+    countdown_played = False
+    bottom_margin = 200
+    stun_duration = 500
+    human_spawn_interval = 5000
+    win_score = 100
+    # Points awarded per human hit. Default: 10% of win_score (so 10 when win_score=100)
+    points_per_human = max(1, win_score // 10)
 
-running = True
-while running:
-    clock.tick(FPS)
+    running = True
+    while running:
+        clock.tick(FPS)
     pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
     elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
@@ -384,11 +386,17 @@ while running:
         screen.blit(quit_text, (quit_button.centerx - quit_text.get_width() // 2,
                                 quit_button.centery - quit_text.get_height() // 2))
         
-        if restart_hover or quit_hover:
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            if restart_hover or quit_hover:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
 
-    pygame.display.flip()
+        pygame.display.flip()
 
-pygame.quit()
-sys.exit()
+        await asyncio.sleep(0)
+
+    pygame.quit()
+    sys.exit()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
 
