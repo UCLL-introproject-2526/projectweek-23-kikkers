@@ -156,7 +156,9 @@ while running:
                 countdown_start_time = pygame.time.get_ticks()
                 countdown_played = False
             if resume_button.collidepoint(event.pos):
+                paused = False
                 pause_countdown_start = pygame.time.get_ticks()
+                countdown_played = False
             if quit_button.collidepoint(event.pos):
                 running = False
         if game_over and event.type == pygame.MOUSEBUTTONDOWN:
@@ -271,10 +273,14 @@ while running:
         screen.blit(msg, (mosquito.centerx - msg.get_width() // 2, max(0, mosquito.rect.top - msg.get_height() - 6)))
 
     if not game_started:
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(128)
+        screen.blit(overlay, (0, 0))
         countdown_text = font.render(str(max(1, 3 - int(elapsed))), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - countdown_text.get_height() // 2))
 
     if pause_countdown_start > 0:
+        pygame.display.flip()
         countdown_text = big_font.render(str(max(1, 3 - int(pause_countdown_elapsed))), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - countdown_text.get_width() // 2, HEIGHT // 2 - 150))
 
