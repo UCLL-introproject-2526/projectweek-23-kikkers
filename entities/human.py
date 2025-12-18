@@ -14,7 +14,7 @@ class Human(pygame.sprite.Sprite):
         except Exception:
             # Fallback to static human head image or colored circle
             try:
-                self.image = pygame.image.load('assets/images/humanhead.png').convert_alpha()
+                self.image = pygame.image.load('assets/images/luffy3-removebg-preview(1).png').convert_alpha()
                 self.image = pygame.transform.scale(self.image, (72, 72))
             except Exception:
                 self.image = pygame.Surface((72, 72), pygame.SRCALPHA)
@@ -38,7 +38,7 @@ class Human(pygame.sprite.Sprite):
             self.can_be_hit = False
             self.touched_start = pygame.time.get_ticks()
             try:
-                img = pygame.image.load('assets/images/dying_human.png').convert_alpha()
+                img = pygame.image.load('assets/images/luffy3-removebg-preview (1).png').convert_alpha()
                 img = pygame.transform.scale(img, (self.rect.width, self.rect.height))
                 self._touched_image = img
                 topleft = self.rect.topleft

@@ -41,8 +41,8 @@ def load_images():
 
     # Load alternate walking frames for humans (used for simple animation)
     try:
-        _f1 = pygame.image.load('assets/images/crib_walk.png').convert_alpha()
-        _f2 = pygame.image.load('assets/images/crib_walk_3.png').convert_alpha()
+        _f1 = pygame.image.load('assets/images/luffy1-removebg-preview.png').convert_alpha()
+        _f2 = pygame.image.load('assets/images/luffy2-removebg-preview.png').convert_alpha()
         _f1 = pygame.transform.scale(_f1, (96, 96))
         _f2 = pygame.transform.scale(_f2, (96, 96))
         _human_walk_frames = [_f1, _f2]
