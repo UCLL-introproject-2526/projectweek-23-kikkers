@@ -110,7 +110,7 @@ async def main():
                 'alpha': random.randint(10, 40)
             })
         
-        button_width = 280
+        button_width = 350
         button_height = 70
         button_spacing = 20
         start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
@@ -376,20 +376,20 @@ async def main():
                 else:
                     paused = True
             if paused and event.type == pygame.MOUSEBUTTONDOWN:
-                restart_button = pygame.Rect(WIDTH//2 - 180, HEIGHT//2, 80, 40)
-                resume_button = pygame.Rect(WIDTH//2 - 60, HEIGHT//2, 80, 40)
-                quit_button = pygame.Rect(WIDTH//2 + 60, HEIGHT//2, 80, 40)
+                restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 - 40, 200, 50)
+                resume_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 20, 200, 50)
+                quit_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 80, 200, 50)
                 if restart_button.collidepoint(event.pos):
                     mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
                     countdown_start_time = pygame.time.get_ticks()
                     countdown_played = False
                 if resume_button.collidepoint(event.pos):
-                    pause_countdown_start = pygame.time.get_ticks()
+                    paused = False
                 if quit_button.collidepoint(event.pos):
                     running = False
-            if game_over and event.type == pygame.MOUSEBUTTONDOWN:
-                restart_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2, 80, 40)
-                quit_button = pygame.Rect(WIDTH//2 + 20, HEIGHT//2, 80, 40)
+            if (game_over or game_won) and event.type == pygame.MOUSEBUTTONDOWN:
+                restart_button = pygame.Rect(WIDTH // 2 - 180, HEIGHT // 2 + 80, 150, 50)
+                quit_button = pygame.Rect(WIDTH // 2 + 30, HEIGHT // 2 + 80, 150, 50)
                 if restart_button.collidepoint(event.pos):
                     mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
                     countdown_start_time = pygame.time.get_ticks()
