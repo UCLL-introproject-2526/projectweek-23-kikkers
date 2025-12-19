@@ -472,9 +472,9 @@ async def main():
         import math
         
         # Dark panel background
-        panel = pygame.Surface((320, 110), pygame.SRCALPHA)
-        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 320, 110), border_radius=12)
-        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 320, 110), 3, border_radius=12)
+        panel = pygame.Surface((300, 110), pygame.SRCALPHA)
+        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 300, 110), border_radius=12)
+        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 300, 110), 3, border_radius=12)
         screen.blit(panel, (15, 15))
         
         # Score text - clean and readable
