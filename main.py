@@ -117,8 +117,8 @@ async def main():
         button_width = 350
         button_height = 70
         button_spacing = 20
-        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80, button_width, button_height)
-        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 80 + button_height + button_spacing, button_width, button_height)
+        start_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 120, button_width, button_height)
+        quit_button = pygame.Rect(WIDTH // 2 - button_width // 2, HEIGHT // 2 + 120 + button_height + button_spacing, button_width, button_height)
         
         time_offset = 0
         ripple_timer = 0
@@ -250,8 +250,8 @@ async def main():
             subtitle = font.render("The Swamp Chronicles", True, (150, 200, 160))
             screen.blit(subtitle, (WIDTH // 2 - subtitle.get_width() // 2, title_y + 110))
             
-            # Name input field
-            name_input_y = HEIGHT // 2 - 20
+            # Name input field - positioned below title area
+            name_input_y = HEIGHT // 2 + 40
             name_label = font_small.render("Enter your name:", True, (140, 180, 150))
             screen.blit(name_label, (WIDTH // 2 - name_label.get_width() // 2, name_input_y - 30))
             
@@ -513,10 +513,10 @@ async def main():
         # Clean, simple score display with dark swamp feel
         import math
         
-        # Dark panel background
-        panel = pygame.Surface((300, 110), pygame.SRCALPHA)
-        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 300, 110), border_radius=12)
-        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 300, 110), 3, border_radius=12)
+        # Dark panel background - made wider to fit both scores
+        panel = pygame.Surface((400, 110), pygame.SRCALPHA)
+        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 400, 110), border_radius=12)
+        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 400, 110), 3, border_radius=12)
         screen.blit(panel, (15, 15))
         
         # Score text - clean and readable
@@ -527,9 +527,13 @@ async def main():
         score_text = big_font.render(score_str, True, (180, 220, 180))
         screen.blit(score_text, (30, 55))
         
-        # Goal indicator - now shows high score
-        goal_text = font_small.render(f"High Score: {scoreboard_instance.get_high_score()}", True, (120, 160, 130))
-        screen.blit(goal_text, (200, 95))
+        # High score in the same box
+        high_score_label = font_small.render("HIGH SCORE", True, (140, 180, 150))
+        screen.blit(high_score_label, (200, 30))
+        
+        high_score_str = str(scoreboard_instance.get_high_score())
+        high_score_text = big_font.render(high_score_str, True, (180, 220, 180))
+        screen.blit(high_score_text, (200, 55))
 
         if paused:
             # Simple dark overlay
