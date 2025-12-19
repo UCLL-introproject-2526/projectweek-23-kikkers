@@ -6,6 +6,7 @@ import random
 import audio
 from entities.fly import Mosquito
 from entities.frog import Frog
+import scoreboard
 import asyncio
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 #poopie
@@ -67,6 +68,9 @@ async def main():
     import images
     images.load_images()
 
+    # Initialize scoreboard before start_screen
+    import scoreboard
+    scoreboard_instance = scoreboard.Scoreboard()
 
     async def start_screen():
         import math
@@ -297,6 +301,9 @@ async def main():
             else:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
+            # Draw top 5 scores on the right side
+            scoreboard_instance.draw_top_scores(screen, x=WIDTH - 200, y=100)
+
             pygame.display.flip()
             await asyncio.sleep(1/FPS)
 
@@ -332,13 +339,14 @@ async def main():
         frog.set_image(images.frog_image)
         frog.set_open_image(images.frog_tong_image)
         humans_group = pygame.sprite.Group()
-        return mosquito, frog, humans_group, 0, 0, 0, False, False, False, 0
+        scoreboard_instance.reset_score()
+        return mosquito, frog, humans_group, 0, 0, False, False, 0
 
 
     await start_screen()
 
     # Game state
-    mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+    mosquito, frog, humans_group, stun_timer, human_spawn_timer, game_over, paused, pause_countdown_start = reset_game()
     countdown_start_time = pygame.time.get_ticks()
     countdown_played = False
     bottom_margin = 200
@@ -367,7 +375,7 @@ async def main():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+                mosquito, frog, humans_group, stun_timer, human_spawn_timer, game_over, paused, pause_countdown_start = reset_game()
                 countdown_start_time = pygame.time.get_ticks()
                 countdown_played = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and game_started and not game_over:
@@ -380,18 +388,18 @@ async def main():
                 resume_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 20, 200, 50)
                 quit_button = pygame.Rect(WIDTH//2 - 100, HEIGHT//2 + 80, 200, 50)
                 if restart_button.collidepoint(event.pos):
-                    mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+                    mosquito, frog, humans_group, stun_timer, human_spawn_timer, game_over, paused, pause_countdown_start = reset_game()
                     countdown_start_time = pygame.time.get_ticks()
                     countdown_played = False
                 if resume_button.collidepoint(event.pos):
                     paused = False
                 if quit_button.collidepoint(event.pos):
                     running = False
-            if (game_over or game_won) and event.type == pygame.MOUSEBUTTONDOWN:
+            if game_over and event.type == pygame.MOUSEBUTTONDOWN:
                 restart_button = pygame.Rect(WIDTH // 2 - 180, HEIGHT // 2 + 80, 150, 50)
                 quit_button = pygame.Rect(WIDTH // 2 + 30, HEIGHT // 2 + 80, 150, 50)
                 if restart_button.collidepoint(event.pos):
-                    mosquito, frog, humans_group, stun_timer, human_spawn_timer, score, game_won, game_over, paused, pause_countdown_start = reset_game()
+                    mosquito, frog, humans_group, stun_timer, human_spawn_timer, game_over, paused, pause_countdown_start = reset_game()
                     countdown_start_time = pygame.time.get_ticks()
                     countdown_played = False
                 if quit_button.collidepoint(event.pos):
@@ -433,13 +441,9 @@ async def main():
                         except Exception:
                             # fallback: remove if touch() not available
                             human.kill()
-                        score += points_per_human
+                        scoreboard_instance.update_score(points_per_human)
                         # suck_sound.play()
                         stun_timer = stun_duration
-                        if score >= win_score:
-                            game_over = True
-                            game_won = True
-                            # victory.play()
                         break
             frog.update((mosquito.centerx, mosquito.centery), game_started, game_over)
 
@@ -456,6 +460,7 @@ async def main():
             # Game over when mosquito is pulled into frog's mouth
             if game_started and frog.is_mosquito_eaten():
                 game_over = True
+                scoreboard_instance.add_final_score_to_leaderboard()
 
         screen.blit(images.game_background, (0, 0))
         mosquito.draw(screen)
@@ -476,12 +481,12 @@ async def main():
         score_label = font_small.render("SCORE", True, (140, 180, 150))
         screen.blit(score_label, (30, 30))
         
-        score_str = str(score)
+        score_str = str(scoreboard_instance.get_score())
         score_text = big_font.render(score_str, True, (180, 220, 180))
         screen.blit(score_text, (30, 55))
         
-        # Goal indicator
-        goal_text = font_small.render(f"Goal: {win_score}", True, (120, 160, 130))
+        # Goal indicator - now shows high score
+        goal_text = font_small.render(f"High Score: {scoreboard_instance.get_high_score()}", True, (120, 160, 130))
         screen.blit(goal_text, (200, 95))
 
         if paused:
@@ -519,6 +524,9 @@ async def main():
                 button_text = font.render(text, True, (240, 250, 240))
                 screen.blit(button_text, (button.centerx - button_text.get_width() // 2,
                                          button.centery - button_text.get_height() // 2))
+
+            # Draw top 5 scores on the right side during pause
+            scoreboard_instance.draw_top_scores(screen, x=WIDTH - 200, y=100)
 
         if stun_timer > 0 and game_started and not game_over:
             msg = font.render("sucking blood!", True, (255, 100, 100))
@@ -599,9 +607,9 @@ async def main():
             overlay.fill((10, 20, 15, 200))
             screen.blit(overlay, (0, 0))
             
-            # Title
-            title_text = "VICTORY!" if game_won else "GAME OVER"
-            title_color = (160, 220, 140) if game_won else (220, 140, 140)
+            # Title - always "GAME OVER" since no win condition
+            title_text = "GAME OVER"
+            title_color = (220, 140, 140)
             title = huge_font.render(title_text, True, title_color)
             screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 180))
             
@@ -609,8 +617,18 @@ async def main():
             score_label = font.render("Final Score", True, (140, 180, 150))
             screen.blit(score_label, (WIDTH // 2 - score_label.get_width() // 2, HEIGHT // 2 - 40))
             
-            score_text = big_font.render(str(score), True, (180, 220, 180))
+            final_score = scoreboard_instance.get_score()
+            score_text = big_font.render(str(final_score), True, (180, 220, 180))
             screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2))
+            
+            # New high score indicator
+            if scoreboard_instance.is_new_high_score(final_score):
+                new_high_text = font.render("NEW HIGH SCORE!", True, (255, 255, 0))
+                screen.blit(new_high_text, (WIDTH // 2 - new_high_text.get_width() // 2, HEIGHT // 2 + 40))
+            elif scoreboard_instance.get_score_position(final_score) > 0:
+                position = scoreboard_instance.get_score_position(final_score)
+                position_text = font.render(f"#{position} on Leaderboard!", True, (255, 215, 0))
+                screen.blit(position_text, (WIDTH // 2 - position_text.get_width() // 2, HEIGHT // 2 + 40))
             
             # Simple buttons
             restart_button = pygame.Rect(WIDTH // 2 - 180, HEIGHT // 2 + 80, 150, 50)
