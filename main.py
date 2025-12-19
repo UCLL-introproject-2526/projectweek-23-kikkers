@@ -250,6 +250,30 @@ async def main():
             subtitle = font.render("The Swamp Chronicles", True, (150, 200, 160))
             screen.blit(subtitle, (WIDTH // 2 - subtitle.get_width() // 2, title_y + 110))
             
+            # Name input field
+            name_input_y = HEIGHT // 2 - 20
+            name_label = font_small.render("Enter your name:", True, (140, 180, 150))
+            screen.blit(name_label, (WIDTH // 2 - name_label.get_width() // 2, name_input_y - 30))
+            
+            # Name input box
+            input_width = 300
+            input_height = 40
+            input_box = pygame.Rect(WIDTH // 2 - input_width // 2, name_input_y, input_width, input_height)
+            pygame.draw.rect(screen, (20, 35, 25), input_box, border_radius=8)
+            pygame.draw.rect(screen, (80, 120, 90), input_box, 2, border_radius=8)
+            
+            # Display current name input
+            name_text = font_small.render(scoreboard_instance.player_name, True, (255, 255, 255))
+            screen.blit(name_text, (input_box.x + 10, input_box.y + 8))
+            
+            # Cursor blink
+            if time_offset % 1 < 0.5:
+                cursor_x = input_box.x + 10 + name_text.get_width()
+                if cursor_x < input_box.x + input_width - 10:
+                    pygame.draw.line(screen, (255, 255, 255), 
+                                   (cursor_x, input_box.y + 5), 
+                                   (cursor_x, input_box.y + input_height - 5), 2)
+            
             # Draw stylish swamp-themed buttons
             for button, text, color_base in [(start_button, "Start Adventure", (60, 150, 80)), 
                                               (quit_button, "Leave Swamp", (150, 80, 60))]:
@@ -311,6 +335,24 @@ async def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        scoreboard_instance.player_name = scoreboard_instance.player_name[:-1]
+                    elif event.key == pygame.K_RETURN:
+                        # Start game when Enter is pressed
+                        for _ in range(5):
+                            water_ripples.append({
+                                'x': WIDTH // 2 + random.randint(-20, 20),
+                                'y': HEIGHT // 2 + 80 + random.randint(-20, 20),
+                                'radius': 0,
+                                'max_radius': random.randint(60, 100),
+                                'alpha': 255
+                            })
+                        await asyncio.sleep(0.3)
+                        return
+                    elif len(scoreboard_instance.player_name) < 15:  # Limit name length
+                        if event.unicode.isprintable():
+                            scoreboard_instance.player_name += event.unicode
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if start_button.collidepoint(event.pos):
                         # Ripple effect on click
