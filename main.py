@@ -399,12 +399,45 @@ async def main():
     points_per_human = max(1, win_score // 10)
 
     running = True
+
     while running:
         clock.tick(FPS)
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
         elapsed = (pygame.time.get_ticks() - countdown_start_time) / 1000
         game_started = elapsed >= 3
+
+        # --- DIFFICULTY SCALING ---
+        score = scoreboard_instance.get_score()
+        # Scaling factors (tweak as needed)
+        # Tongue cooldown: min 10, max 70, scales down with score
+        min_cooldown = 10
+        max_cooldown = 70
+        cooldown_scale = max(min_cooldown, max_cooldown - int(score * 0.7))
+        # Tongue extend/retract speed: base 12/20, scales up with score
+        base_extend = 12
+        base_retract = 20
+        max_extend = 32
+        max_retract = 40
+        tongue_extend = min(max_extend, base_extend + int(score * 0.15))
+        tongue_retract = min(max_retract, base_retract + int(score * 0.15))
+        # Mosquito speed: base 7, scales up slower
+        base_mosq_speed = 7
+        max_mosq_speed = 13
+        mosq_speed = min(max_mosq_speed, base_mosq_speed + score * 0.05)
+
+        # Apply to frog (cooldown logic)
+        # If frog is idle or just finished attack, set attack_timer to cooldown_scale
+        if hasattr(frog, 'state') and hasattr(frog, 'attack_timer'):
+            if frog.state in ("idle", "attacking") and frog.attack_timer > cooldown_scale:
+                frog.attack_timer = cooldown_scale
+        # Apply to tongue
+        if hasattr(frog, 'tongue'):
+            frog.tongue.extend_speed = tongue_extend
+            frog.tongue.retract_speed = tongue_retract
+        # Apply to mosquito
+        if hasattr(mosquito, 'max_speed'):
+            mosquito.max_speed = mosq_speed
 
         if not game_started and not countdown_played:
             # countdown_sound.play()
