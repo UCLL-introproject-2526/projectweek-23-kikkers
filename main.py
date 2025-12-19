@@ -467,9 +467,9 @@ async def main():
         import math
         
         # Dark panel background
-        panel = pygame.Surface((280, 110), pygame.SRCALPHA)
-        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 280, 110), border_radius=12)
-        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 280, 110), 3, border_radius=12)
+        panel = pygame.Surface((320, 110), pygame.SRCALPHA)
+        pygame.draw.rect(panel, (15, 25, 20, 220), (0, 0, 320, 110), border_radius=12)
+        pygame.draw.rect(panel, (50, 80, 60, 255), (0, 0, 320, 110), 3, border_radius=12)
         screen.blit(panel, (15, 15))
         
         # Score text - clean and readable
@@ -603,7 +603,7 @@ async def main():
             title_text = "VICTORY!" if game_won else "GAME OVER"
             title_color = (160, 220, 140) if game_won else (220, 140, 140)
             title = huge_font.render(title_text, True, title_color)
-            screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 140))
+            screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 180))
             
             # Score
             score_label = font.render("Final Score", True, (140, 180, 150))
